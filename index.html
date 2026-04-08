@@ -51,6 +51,10 @@
       background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.3);
       color: var(--blue); font-size: .72rem; font-weight: 700;
       padding: .25rem .75rem; border-radius: 99px; letter-spacing: .04em;
+      transition: background .2s, border-color .2s;
+    }
+    .period-badge.filtered {
+      background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: var(--amber);
     }
     .btn {
       display: inline-flex; align-items: center; gap: .4rem;
@@ -61,26 +65,84 @@
     .btn:hover { background: var(--border); border-color: var(--blue); }
     .btn svg { width: 13px; height: 13px; }
 
-    /* ── Layout ──────────────────────────────────────────── */
-    .main { padding: 1.75rem 2rem; max-width: 1700px; margin: 0 auto; }
+    /* ── Filter bar ──────────────────────────────────────── */
+    .filter-wrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .65rem 2rem;
+      display: flex; align-items: center; flex-wrap: wrap; gap: .5rem;
+      position: sticky; top: 62px; z-index: 99;
+    }
+    .filter-label {
+      font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted); margin-right: .25rem;
+      white-space: nowrap;
+    }
+    .filter-pills { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
+    .filter-sep { color: var(--border); font-size: 1.1rem; margin: 0 .15rem; user-select: none; }
 
+    .fp {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); padding: .3rem .7rem;
+      border-radius: 99px; cursor: pointer; font-size: .75rem;
+      font-weight: 600; white-space: nowrap;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .fp:hover { background: var(--surface2); color: var(--text); border-color: var(--blue); }
+    .fp.active {
+      background: var(--blue); border-color: var(--blue);
+      color: #fff;
+    }
+    .fp.q-pill { }
+
+    /* Custom range row */
+    .custom-range {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .5rem .75rem; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--rs);
+      flex-wrap: wrap;
+    }
+    .custom-range.hidden { display: none; }
+    .custom-range label {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .75rem; color: var(--muted); white-space: nowrap;
+    }
+    input[type="month"] {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: .3rem .55rem; border-radius: var(--rs);
+      font-size: .78rem; outline: none; cursor: pointer;
+      transition: border-color .15s;
+    }
+    input[type="month"]:focus { border-color: var(--blue); }
+    /* Style the calendar picker icon */
+    input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(.5); cursor: pointer; }
+
+    .apply-btn {
+      background: var(--blue); border: 1px solid var(--blue);
+      color: #fff; padding: .3rem .75rem; border-radius: 99px;
+      cursor: pointer; font-size: .75rem; font-weight: 600;
+      transition: opacity .15s;
+    }
+    .apply-btn:hover { opacity: .85; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .main { padding: 1.5rem 2rem; max-width: 1700px; margin: 0 auto; }
     .section-label {
       font-size: .68rem; font-weight: 700; letter-spacing: .14em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: .8rem;
+      text-transform: uppercase; color: var(--muted); margin-bottom: .75rem;
     }
 
     /* ── KPI Cards ───────────────────────────────────────── */
     .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: .75rem; margin-bottom: 1.75rem;
+      display: grid; grid-template-columns: repeat(8, 1fr);
+      gap: .75rem; margin-bottom: 1.5rem;
     }
     @media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
     @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .kpi {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 1.1rem 1.2rem;
+      border-radius: var(--r); padding: 1rem 1.1rem;
       position: relative; overflow: hidden;
       transition: border-color .2s, transform .15s;
     }
@@ -89,39 +151,42 @@
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
       background: var(--kpi-c, var(--blue));
     }
-    .kpi-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; margin-bottom: .35rem; }
-    .kpi-val   { font-size: 1.55rem; font-weight: 800; line-height: 1; color: var(--kpi-c, var(--blue)); }
-    .kpi-sub   { font-size: .7rem; color: var(--muted); margin-top: .3rem; }
+    .kpi-label { font-size: .63rem; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; margin-bottom: .3rem; }
+    .kpi-val   { font-size: 1.45rem; font-weight: 800; line-height: 1.1; color: var(--kpi-c, var(--blue)); }
+    .kpi-sub   { font-size: .68rem; color: var(--muted); margin-top: .25rem; }
 
-    /* ── Chart cards ─────────────────────────────────────── */
-    .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-    .grid-3-eq { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    /* ── Chart grid ──────────────────────────────────────── */
+    .grid-3   { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .grid-3eq { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .grid-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 
-    @media (max-width: 1100px) { .grid-3, .grid-3-eq { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 700px)  { .grid-3, .grid-3-eq, .grid-2 { grid-template-columns: 1fr; } .main { padding: 1rem; } .topbar { padding: 0 1rem; } }
+    @media (max-width: 1100px) { .grid-3, .grid-3eq { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px)  {
+      .grid-3, .grid-3eq, .grid-2 { grid-template-columns: 1fr; }
+      .main { padding: 1rem; }
+      .topbar, .filter-wrap { padding-left: 1rem; padding-right: 1rem; }
+    }
 
     .card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--r); padding: 1.2rem;
     }
-    .card-hd {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1rem;
-    }
+    .card-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
     .card-title { font-size: .85rem; font-weight: 700; }
     .card-tag {
-      font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
-      background: rgba(59,130,246,.12); color: var(--blue);
-      padding: .18rem .55rem; border-radius: 99px;
+      font-size: .63rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; background: rgba(59,130,246,.12);
+      color: var(--blue); padding: .18rem .5rem; border-radius: 99px;
     }
 
     .cw       { position: relative; height: 230px; }
     .cw.tall  { height: 270px; }
-    .cw.short { height: 180px; }
 
-    /* ── Monthly Table ───────────────────────────────────── */
-    .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-top: 1.5rem; }
+    /* ── Table ───────────────────────────────────────────── */
+    .table-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden; margin-top: 1.5rem;
+    }
     .tbl-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .8rem; }
     thead th {
@@ -135,18 +200,10 @@
     tbody tr:hover { background: var(--surface2); }
     tbody tr.total-row { background: var(--surface2); font-weight: 700; border-top: 2px solid var(--border); }
     td { padding: .6rem .9rem; text-align: right; white-space: nowrap; }
-    td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+    td:first-child { text-align: left; font-weight: 600; }
     .pos { color: var(--green); font-weight: 700; }
     .neg { color: var(--red);   font-weight: 700; }
     .neu { color: var(--text); }
-
-    /* ── Conversion list ─────────────────────────────────── */
-    .conv-list { list-style: none; display: flex; flex-direction: column; gap: .55rem; margin-top: .25rem; }
-    .conv-list li { display: flex; align-items: center; gap: .55rem; font-size: .82rem; }
-    .conv-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .conv-name { flex: 1; color: var(--muted); }
-    .conv-val  { font-weight: 700; }
-    .conv-pct  { color: var(--muted); font-size: .72rem; width: 36px; text-align: right; }
 
     /* ── Loading / Error ─────────────────────────────────── */
     .overlay {
@@ -175,6 +232,7 @@
     }
 
     hr.div { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .no-data { text-align:center; color: var(--muted); padding: 3rem; font-size:.85rem; }
   </style>
 </head>
 <body>
@@ -182,7 +240,7 @@
 <script>
   // ── CONFIG ──────────────────────────────────────────────────
   const SPREADSHEET_ID = "1mjzGs7BwVLm4MmwH9dI9duYHW1zO4nMIpRcc_epnU9A";
-  const GID            = "1198665066";  // "Ad Spend & Margin Dashboard" tab
+  const GID            = "1198665066";   // "Ad Spend & Margin Dashboard" tab
   const CSV_URL        = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
 </script>
 
@@ -198,7 +256,7 @@
     <h3>⚠ Could not load data</h3>
     <p id="errMsg"></p>
     <p><strong>"Share with anyone" is not enough.</strong><br>
-       You must publish via <strong>File → Share → Publish to web</strong><br>
+       Publish via <strong>File → Share → Publish to web</strong><br>
        Select your tab → <strong>CSV</strong> → <strong>Publish</strong></p>
     <code id="errUrl"></code>
     <button class="btn" style="margin:.5rem auto 0;display:flex" onclick="loadData()">
@@ -210,7 +268,7 @@
   </div>
 </div>
 
-<!-- Top Bar -->
+<!-- ── Top Bar ─────────────────────────────────────────────── -->
 <header class="topbar">
   <div class="brand">
     <div class="brand-icon">📈</div>
@@ -220,7 +278,7 @@
     </div>
   </div>
   <div class="topbar-right">
-    <span class="period-badge" id="periodBadge">Jul 2025 – Apr 2026</span>
+    <span class="period-badge" id="periodBadge">All Time</span>
     <span class="updated" id="updatedLabel"></span>
     <button class="btn" onclick="loadData()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -231,7 +289,38 @@
   </div>
 </header>
 
-<!-- Main -->
+<!-- ── Filter Bar ──────────────────────────────────────────── -->
+<div class="filter-wrap">
+  <span class="filter-label">Period:</span>
+  <div class="filter-pills">
+    <button class="fp active" data-preset="all"       onclick="selectPreset(this)">All Time</button>
+    <button class="fp"        data-preset="thisMonth" onclick="selectPreset(this)">This Month</button>
+    <button class="fp"        data-preset="prevMonth" onclick="selectPreset(this)">Prev Month</button>
+    <span class="filter-sep">·</span>
+    <button class="fp q-pill" data-preset="q3-2025"   onclick="selectPreset(this)">Q3 '25</button>
+    <button class="fp q-pill" data-preset="q4-2025"   onclick="selectPreset(this)">Q4 '25</button>
+    <button class="fp q-pill" data-preset="q1-2026"   onclick="selectPreset(this)">Q1 '26</button>
+    <button class="fp q-pill" data-preset="q2-2026"   onclick="selectPreset(this)">Q2 '26</button>
+    <span class="filter-sep">·</span>
+    <button class="fp"        data-preset="ytd"       onclick="selectPreset(this)">YTD</button>
+    <button class="fp"        data-preset="custom"    onclick="selectPreset(this)">Custom&nbsp;▾</button>
+  </div>
+
+  <!-- Custom date range (hidden until "Custom" is clicked) -->
+  <div class="custom-range hidden" id="customRange">
+    <label>
+      From
+      <input type="month" id="fromMonth" min="2025-07" max="2026-04" value="2025-07" />
+    </label>
+    <label>
+      To
+      <input type="month" id="toMonth"   min="2025-07" max="2026-04" value="2026-04" />
+    </label>
+    <button class="apply-btn" onclick="applyCustomRange()">Apply</button>
+  </div>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────── -->
 <main class="main">
 
   <!-- KPIs -->
@@ -240,7 +329,7 @@
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Total Revenue</div>
       <div class="kpi-val" id="k-revenue">—</div>
-      <div class="kpi-sub">Jul 2025 – Apr 2026</div>
+      <div class="kpi-sub" id="k-revenue-sub">filtered period</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--blue)">
       <div class="kpi-label">Total Orders</div>
@@ -255,12 +344,12 @@
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Total Gross Profit</div>
       <div class="kpi-val" id="k-profit">—</div>
-      <div class="kpi-sub" id="k-profit-sub">after all costs</div>
+      <div class="kpi-sub">after all costs</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--purple)">
       <div class="kpi-label">Avg Gross Margin</div>
       <div class="kpi-val" id="k-margin">—</div>
-      <div class="kpi-sub">across all months</div>
+      <div class="kpi-sub">across period</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--blue)">
       <div class="kpi-label">Avg ROAS</div>
@@ -269,13 +358,13 @@
     </div>
     <div class="kpi" style="--kpi-c:var(--red)">
       <div class="kpi-label">Total Mkt Spend</div>
-      <div class="kpi-val" id="k-mktspend">—</div>
-      <div class="kpi-sub">Google + Meta Ads</div>
+      <div class="kpi-val" id="k-mkt">—</div>
+      <div class="kpi-sub">Google + Meta</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--amber)">
       <div class="kpi-label">Avg Mkt % of Rev</div>
       <div class="kpi-val" id="k-mktpct">—</div>
-      <div class="kpi-sub">marketing cost ratio</div>
+      <div class="kpi-sub">marketing ratio</div>
     </div>
   </div>
 
@@ -283,7 +372,7 @@
   <p class="section-label">Monthly Performance</p>
   <div class="grid-3">
     <div class="card">
-      <div class="card-hd"><span class="card-title">Monthly Revenue</span><span class="card-tag">Jul – Apr</span></div>
+      <div class="card-hd"><span class="card-title">Monthly Revenue</span><span class="card-tag" id="tagRevenue">All Time</span></div>
       <div class="cw tall"><canvas id="chartRevenue"></canvas></div>
     </div>
     <div class="card">
@@ -315,7 +404,7 @@
   <!-- Row 3: New vs Returning + Conversions + AOV -->
   <div class="grid-3">
     <div class="card">
-      <div class="card-hd"><span class="card-title">New vs Returning Customers</span><span class="card-tag">by month</span></div>
+      <div class="card-hd"><span class="card-title">New vs Returning Customers</span><span class="card-tag" id="tagNewRet">filtered</span></div>
       <div class="cw"><canvas id="chartNewRet"></canvas></div>
     </div>
     <div class="card">
@@ -338,20 +427,11 @@
         <thead>
           <tr>
             <th style="text-align:left">Month</th>
-            <th>Orders</th>
-            <th>Revenue</th>
-            <th>AOV</th>
-            <th>Total COGS</th>
-            <th>Google Ads</th>
-            <th>Meta Ads</th>
-            <th>Mkt Cost/Order</th>
-            <th>ROAS</th>
-            <th>Mkt % Rev</th>
-            <th>Cost/Order</th>
-            <th>Margin/Order</th>
-            <th>Gross Margin %</th>
-            <th>Gross Profit</th>
-            <th>Daily Mkt Cost</th>
+            <th>Orders</th><th>Revenue</th><th>AOV</th>
+            <th>Total COGS</th><th>Google Ads</th><th>Meta Ads</th>
+            <th>Mkt Cost/Order</th><th>ROAS</th><th>Mkt % Rev</th>
+            <th>Cost/Order</th><th>Margin/Order</th>
+            <th>Gross Margin %</th><th>Gross Profit</th><th>Daily Mkt Cost</th>
           </tr>
         </thead>
         <tbody id="perfBody"></tbody>
@@ -362,442 +442,525 @@
 </main>
 
 <script>
-/* ════════════════════════════════════════════════════
-   DATA STORE
-════════════════════════════════════════════════════ */
-let D = {};   // parsed data object
-
+/* ══════════════════════════════════════════════════
+   MONTH METADATA
+══════════════════════════════════════════════════ */
 const MONTHS_ORDER = ['July','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
 const MONTH_LABELS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
-const charts = {};
 
-/* ════════════════════════════════════════════════════
-   BOOT
-════════════════════════════════════════════════════ */
+// Maps full month name → { year, quarter (1-4), YYYY-MM for range inputs }
+const MONTH_META = {
+  'July': { year:2025, q:3, val:'2025-07' },
+  'Aug':  { year:2025, q:3, val:'2025-08' },
+  'Sep':  { year:2025, q:3, val:'2025-09' },
+  'Oct':  { year:2025, q:4, val:'2025-10' },
+  'Nov':  { year:2025, q:4, val:'2025-11' },
+  'Dec':  { year:2025, q:4, val:'2025-12' },
+  'Jan':  { year:2026, q:1, val:'2026-01' },
+  'Feb':  { year:2026, q:1, val:'2026-02' },
+  'Mar':  { year:2026, q:1, val:'2026-03' },
+  'Apr':  { year:2026, q:2, val:'2026-04' },
+};
+
+const PALETTE = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16'];
+const GREEN   = '#10b981';
+const RED     = '#ef4444';
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let D        = {};                // full parsed data
+let preset   = 'all';             // active filter preset
+let charts   = {};                // Chart.js instances
+
+/* ══════════════════════════════════════════════════
+   LOAD & PARSE
+══════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', loadData);
 
 async function loadData() {
-  overlay('loading', true);
-  overlay('error', false);
+  showOverlay('loading', true);
+  showOverlay('error', false);
   try {
     const res = await fetch(CSV_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
     D = parseSheet(rows);
-    renderKPIs();
-    renderCharts();
-    renderTable();
     document.getElementById('updatedLabel').textContent =
       'Updated ' + new Date().toLocaleTimeString();
-    if (D.period) document.getElementById('periodBadge').textContent = D.period;
+    renderAll();
   } catch(e) {
-    overlay('error', true, e.message);
+    showOverlay('error', true, e.message);
   }
-  overlay('loading', false);
+  showOverlay('loading', false);
 }
 
-/* ════════════════════════════════════════════════════
-   PARSE — knows the exact shape of this spreadsheet
-════════════════════════════════════════════════════ */
 function parseSheet(rows) {
-  const out = {
-    period: '', kpi: {}, monthly: [], totals: {}, convSource: [], newRet: []
-  };
+  const out = { kpi:{}, monthly:[], totals:{}, convSource:[], newRet:[] };
+  let inMonthly=false, inConv=false, inNewRet=false;
 
-  let inMonthly = false, inConv = false, inNewRet = false;
+  for (let i=0; i<rows.length; i++) {
+    const r  = rows[i];
+    const c1 = (r[1]||'').trim();
+    const c2 = (r[2]||'').trim();
 
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const c1 = (r[1] || '').trim();
-    const c2 = (r[2] || '').trim();
-
-    // Period subtitle
-    if (c1.includes('–') && c1.includes('2025')) out.period = c1.split('|')[0].trim();
-
-    // KPI labels row
+    // KPI summary
     if (c1 === 'TOTAL REVENUE') {
-      const vals = rows[i + 1] || [];
-      out.kpi = {
-        revenue:  vals[1], orders:   vals[2], aov:      vals[3],
-        profit:   vals[4], margin:   vals[5], roas:     vals[6],
-        mktSpend: vals[7], mktPct:   vals[8]
-      };
+      const v = rows[i+1]||[];
+      out.kpi = { revenue:v[1], orders:v[2], aov:v[3], profit:v[4], margin:v[5], roas:v[6], mktSpend:v[7], mktPct:v[8] };
     }
 
     // Monthly table header
-    if (c1 === 'Month' && c2 === 'Orders') { inMonthly = true; inConv = false; inNewRet = false; continue; }
+    if (c1==='Month' && c2==='Orders') { inMonthly=true; inConv=false; inNewRet=false; continue; }
 
-    // Monthly data rows
     if (inMonthly) {
       if (MONTHS_ORDER.includes(c1)) {
         out.monthly.push({
-          month:      c1,
-          orders:     r[2], revenue:    r[3], aov:        r[4],
-          cogs:       r[5], googleAds:  r[6], metaAds:    r[7],
-          mktPerOrder:r[8], roas:       r[9], mktPctRev:  r[10],
+          month:c1, orders:r[2], revenue:r[3], aov:r[4],
+          cogs:r[5], googleAds:r[6], metaAds:r[7],
+          mktPerOrder:r[8], roas:r[9], mktPctRev:r[10],
           costPerOrder:r[11], marginPerOrder:r[12],
-          grossMarginPct: r[13], grossProfit: r[14], dailyMktCost: r[15]
+          grossMarginPct:r[13], grossProfit:r[14], dailyMktCost:r[15]
         });
       }
-      if (c1.startsWith('Total') || c1.startsWith('Avg')) {
-        out.totals = {
-          orders: r[2], revenue: r[3], aov: r[4], cogs: r[5],
-          googleAds: r[6], metaAds: r[7], mktPerOrder: r[8],
-          roas: r[9], mktPctRev: r[10], costPerOrder: r[11],
-          marginPerOrder: r[12], grossMarginPct: r[13], grossProfit: r[14]
-        };
-        inMonthly = false;
+      if (/^Total|^Avg/i.test(c1)) {
+        out.totals = { orders:r[2], revenue:r[3], aov:r[4], cogs:r[5], googleAds:r[6], metaAds:r[7], mktPerOrder:r[8], roas:r[9], mktPctRev:r[10], costPerOrder:r[11], marginPerOrder:r[12], grossMarginPct:r[13], grossProfit:r[14] };
+        inMonthly=false;
       }
     }
 
     // Conversions by Source
-    if (c1 === 'Conversions by Source (Current Month)') { inConv = true; inMonthly = false; inNewRet = false; continue; }
-    if (inConv && c2 && !isNaN(parseFloat(r[3])) && c2 !== 'RETURNING') {
-      out.convSource.push({ source: c2, count: parseFloat(r[3]) });
+    if (c1==='Conversions by Source (Current Month)') { inConv=true; inMonthly=false; inNewRet=false; continue; }
+    if (inConv && c2 && !isNaN(parseFloat(r[3])) && c2!=='RETURNING') {
+      out.convSource.push({ source:c2, count:parseFloat(r[3]) });
     }
-    if (inConv && !c2 && r[3] && MONTHS_ORDER.includes(c1)) inConv = false;
 
     // New vs Returning
-    if (c1 === 'NEW V RETURNING CUSTOMERS BY MONTH') { inNewRet = true; inConv = false; inMonthly = false; continue; }
+    if (c1==='NEW V RETURNING CUSTOMERS BY MONTH') { inNewRet=true; inConv=false; inMonthly=false; continue; }
     if (inNewRet && MONTHS_ORDER.includes(c1)) {
-      out.newRet.push({
-        month: c1, newCust: parseFloat(r[2])||0,
-        returning: parseFloat(r[3])||0, total: parseFloat(r[4])||0,
-        retPct: r[5]
-      });
+      out.newRet.push({ month:c1, newCust:parseFloat(r[2])||0, returning:parseFloat(r[3])||0, total:parseFloat(r[4])||0 });
     }
   }
-
   return out;
 }
 
-/* ════════════════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════════════════ */
-function pv(str) {
-  // Parse a value string like "$28,263", "3.40x", "29.4%", "-$595", "(3,853)"
-  if (!str) return null;
-  str = String(str).trim();
-  if (!str || str === '-') return null;
-  const neg = /^-|\(/.test(str);
-  const clean = str.replace(/[$,()%x\s]/g, '').replace(/^-/, '');
-  const n = parseFloat(clean);
-  return isNaN(n) ? null : (neg && n > 0 ? -n : n);
-}
+/* ══════════════════════════════════════════════════
+   FILTER LOGIC
+══════════════════════════════════════════════════ */
+function getFilteredMonths(p, from, to) {
+  const all  = D.monthly || [];
+  if (!all.length) return all;
 
-function fc(n, decimals = 0) {
-  if (n == null || isNaN(n)) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD',
-    minimumFractionDigits: decimals, maximumFractionDigits: decimals
-  }).format(n);
-}
-function fp(n, d = 1) { return n != null ? n.toFixed(d) + '%' : '—'; }
-function fn(n)         { return n != null ? n.toLocaleString() : '—'; }
-function fr(str)       {
-  const n = pv(str);
-  return n != null ? n.toFixed(2) + 'x' : '—';
-}
+  const lastMonth = all[all.length-1].month;
+  const lastIdx   = MONTHS_ORDER.indexOf(lastMonth);
+  const prevMonth = lastIdx > 0 ? MONTHS_ORDER[lastIdx-1] : null;
 
-function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-
-function overlay(type, on, msg = '') {
-  if (type === 'loading') document.getElementById('loadingOverlay').classList.toggle('hidden', !on);
-  if (type === 'error') {
-    document.getElementById('errorOverlay').classList.toggle('hidden', !on);
-    if (on) { document.getElementById('errMsg').textContent = msg; document.getElementById('errUrl').textContent = CSV_URL; }
+  switch(p) {
+    case 'all':       return all;
+    case 'thisMonth': return all.filter(m => m.month === lastMonth);
+    case 'prevMonth': return prevMonth ? all.filter(m => m.month === prevMonth) : [];
+    case 'q3-2025':   return all.filter(m => MONTH_META[m.month]?.year===2025 && MONTH_META[m.month]?.q===3);
+    case 'q4-2025':   return all.filter(m => MONTH_META[m.month]?.year===2025 && MONTH_META[m.month]?.q===4);
+    case 'q1-2026':   return all.filter(m => MONTH_META[m.month]?.year===2026 && MONTH_META[m.month]?.q===1);
+    case 'q2-2026':   return all.filter(m => MONTH_META[m.month]?.year===2026 && MONTH_META[m.month]?.q===2);
+    case 'ytd':       return all.filter(m => MONTH_META[m.month]?.year===2026);
+    case 'custom': {
+      if (!from || !to) return all;
+      return all.filter(m => {
+        const v = MONTH_META[m.month]?.val;
+        return v && v >= from && v <= to;
+      });
+    }
+    default: return all;
   }
 }
 
-/* ════════════════════════════════════════════════════
-   KPIs
-════════════════════════════════════════════════════ */
-function renderKPIs() {
-  const k = D.kpi;
-  setText('k-revenue',  k.revenue  || '—');
-  setText('k-orders',   k.orders   || '—');
-  setText('k-aov',      k.aov      || '—');
-  const profit = pv(k.profit);
-  const el = document.getElementById('k-profit');
-  if (el) { el.textContent = k.profit || '—'; el.style.color = profit != null && profit < 0 ? 'var(--red)' : 'var(--green)'; }
-  setText('k-margin',   k.margin   || '—');
-  setText('k-roas',     k.roas     || '—');
-  setText('k-mktspend', k.mktSpend || '—');
-  setText('k-mktpct',   k.mktPct   || '—');
+function getFilteredNewRet(months) {
+  const names = new Set(months.map(m=>m.month));
+  return (D.newRet||[]).filter(r => names.has(r.month));
 }
 
-/* ════════════════════════════════════════════════════
-   CHARTS
-════════════════════════════════════════════════════ */
-const PALETTE   = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16','#f97316','#a78bfa'];
-const GREEN_HEX = '#10b981';
-const RED_HEX   = '#ef4444';
+// Compute KPIs from a filtered month array (don't rely on pre-parsed summary row)
+function computeKPIs(months) {
+  if (!months.length) return {};
+  const totalRevenue = months.reduce((s,m) => s+(pv(m.revenue)||0), 0);
+  const totalOrders  = months.reduce((s,m) => s+(pv(m.orders)||0),  0);
+  const aov          = totalOrders > 0 ? totalRevenue/totalOrders : 0;
+  const totalProfit  = months.reduce((s,m) => s+(pv(m.grossProfit)||0), 0);
+  const marginVals   = months.map(m=>pv(m.grossMarginPct)).filter(v=>v!=null);
+  const avgMargin    = marginVals.length ? marginVals.reduce((a,b)=>a+b,0)/marginVals.length : 0;
+  const roasVals     = months.map(m=>pv(m.roas)).filter(v=>v!=null);
+  const avgRoas      = roasVals.length ? roasVals.reduce((a,b)=>a+b,0)/roasVals.length : 0;
+  const totalMkt     = months.reduce((s,m) => s+(pv(m.googleAds)||0)+(pv(m.metaAds)||0), 0);
+  const mktPctVals   = months.map(m=>pv(m.mktPctRev)).filter(v=>v!=null);
+  const avgMktPct    = mktPctVals.length ? mktPctVals.reduce((a,b)=>a+b,0)/mktPctVals.length : 0;
+  return { totalRevenue, totalOrders, aov, totalProfit, avgMargin, avgRoas, totalMkt, avgMktPct };
+}
 
+/* Period label for top badge */
+function periodLabel(p, from, to) {
+  const labels = {
+    all: 'Jul 2025 – Apr 2026',
+    thisMonth: 'Apr 2026 (This Month)',
+    prevMonth: 'Mar 2026 (Prev Month)',
+    'q3-2025': 'Q3 2025 (Jul–Sep)',
+    'q4-2025': 'Q4 2025 (Oct–Dec)',
+    'q1-2026': 'Q1 2026 (Jan–Mar)',
+    'q2-2026': 'Q2 2026 (Apr)',
+    ytd: 'YTD 2026 (Jan–Apr)',
+  };
+  if (p === 'custom' && from && to) return `${from} → ${to}`;
+  return labels[p] || 'All Time';
+}
+
+/* ══════════════════════════════════════════════════
+   FILTER UI HANDLERS
+══════════════════════════════════════════════════ */
+function selectPreset(btn) {
+  document.querySelectorAll('.fp').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  preset = btn.dataset.preset;
+
+  const customRow = document.getElementById('customRange');
+  if (preset === 'custom') {
+    customRow.classList.remove('hidden');
+    return;   // wait for Apply click
+  }
+  customRow.classList.add('hidden');
+  renderAll();
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('fromMonth').value;
+  const to   = document.getElementById('toMonth').value;
+  if (!from || !to || from > to) {
+    alert('Please select a valid date range (From ≤ To).');
+    return;
+  }
+  renderAll(from, to);
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER ALL — entry point after filter change
+══════════════════════════════════════════════════ */
+function renderAll(from, to) {
+  if (!D.monthly) return;
+  const months = getFilteredMonths(preset, from, to);
+  const label  = periodLabel(preset, from, to);
+
+  // Update badge
+  const badge = document.getElementById('periodBadge');
+  badge.textContent = label;
+  badge.classList.toggle('filtered', preset !== 'all');
+
+  // Chart tag
+  const tagEl = document.getElementById('tagRevenue');
+  if (tagEl) tagEl.textContent = label;
+  const nrTag = document.getElementById('tagNewRet');
+  if (nrTag) nrTag.textContent = months.length > 1 ? label : months[0]?.month || label;
+
+  renderKPIs(months);
+  renderCharts(months, getFilteredNewRet(months));
+  renderTable(months);
+}
+
+/* ══════════════════════════════════════════════════
+   KPIs
+══════════════════════════════════════════════════ */
+function renderKPIs(months) {
+  if (!months.length) {
+    ['k-revenue','k-orders','k-aov','k-profit','k-margin','k-roas','k-mkt','k-mktpct']
+      .forEach(id => setText(id, '—'));
+    return;
+  }
+  const k = computeKPIs(months);
+
+  setText('k-revenue', fc(k.totalRevenue));
+  setText('k-revenue-sub', months.length + (months.length===1?' month':' months'));
+  setText('k-orders',  fn(k.totalOrders));
+  setText('k-orders-sub', months.length + (months.length===1?' month':' months'));
+  setText('k-aov',     fc(k.aov, 2));
+  const profitEl = document.getElementById('k-profit');
+  if (profitEl) {
+    profitEl.textContent = fc(k.totalProfit);
+    profitEl.style.color = k.totalProfit < 0 ? 'var(--red)' : 'var(--green)';
+  }
+  setText('k-margin',  k.avgMargin.toFixed(1) + '%');
+  setText('k-roas',    k.avgRoas.toFixed(2)   + 'x');
+  setText('k-mkt',     fc(k.totalMkt));
+  setText('k-mktpct',  k.avgMktPct.toFixed(1) + '%');
+}
+
+/* ══════════════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════════════ */
 function mk(id, type, data, opts) {
   if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id).getContext('2d'), { type, data, options: opts });
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, { type, data, options: opts });
 }
 
-function baseOpts(overrides = {}) {
+function baseOpts(ytickFn, tooltipFn) {
   return {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: {} },
-    scales: {
-      x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
-      y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } }
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: tooltipFn || (c => ` ${c.parsed.y}`) } }
     },
-    ...overrides
+    scales: {
+      x: { ticks:{ color:'#64748b', font:{size:10} }, grid:{ color:'#252d45' } },
+      y: { ticks:{ color:'#64748b', font:{size:10}, callback: ytickFn || (v=>v) }, grid:{ color:'#252d45' } }
+    }
   };
 }
 
-function renderCharts() {
-  const months = D.monthly;
-  if (!months.length) return;
+function renderCharts(months, newRet) {
+  if (!months.length) {
+    Object.keys(charts).forEach(id => {
+      if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+    });
+    return;
+  }
 
-  const labels = months.map(m => MONTH_LABELS[MONTHS_ORDER.indexOf(m.month)] || m.month);
-  const revenues   = months.map(m => pv(m.revenue));
-  const orders     = months.map(m => pv(m.orders));
-  const aovs       = months.map(m => pv(m.aov));
-  const roasArr    = months.map(m => { const v = pv(m.roas); return v; });
-  const marginPcts = months.map(m => pv(m.grossMarginPct));
-  const profits    = months.map(m => pv(m.grossProfit));
-  const google     = months.map(m => pv(m.googleAds) || 0);
-  const meta       = months.map(m => pv(m.metaAds)   || 0);
+  const labels   = months.map(m => MONTH_LABELS[MONTHS_ORDER.indexOf(m.month)] || m.month);
+  const revenues = months.map(m => pv(m.revenue));
+  const orders   = months.map(m => pv(m.orders));
+  const aovs     = months.map(m => pv(m.aov));
+  const roas     = months.map(m => pv(m.roas));
+  const margins  = months.map(m => pv(m.grossMarginPct));
+  const profits  = months.map(m => pv(m.grossProfit));
+  const google   = months.map(m => pv(m.googleAds)||0);
+  const meta     = months.map(m => pv(m.metaAds)||0);
 
-  // ── Revenue ───────────────────────────────────────
+  const maxRev = Math.max(...revenues.filter(Boolean), 1);
+
+  // Revenue
   mk('chartRevenue', 'bar', {
     labels,
     datasets: [{
       data: revenues,
-      backgroundColor: revenues.map((v,i) => v === Math.max(...revenues) ? GREEN_HEX + 'dd' : PALETTE[0] + '99'),
-      borderColor:     revenues.map((v,i) => v === Math.max(...revenues) ? GREEN_HEX : PALETTE[0]),
+      backgroundColor: revenues.map(v => v===maxRev ? GREEN+'dd' : PALETTE[0]+'99'),
+      borderColor:     revenues.map(v => v===maxRev ? GREEN : PALETTE[0]),
       borderWidth: 1.5, borderRadius: 6,
     }]
-  }, baseOpts({
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + fc(c.parsed.y) } } },
-    scales: {
-      x: { ticks: { color:'#64748b', font:{size:10} }, grid:{color:'#252d45'} },
-      y: { ticks: { color:'#64748b', font:{size:10}, callback: v => '$' + (v>=1000 ? (v/1000).toFixed(0)+'K' : v) }, grid:{color:'#252d45'} }
-    }
-  }));
+  }, baseOpts(v => shortCurrency(v), c => ' '+fc(c.parsed.y)));
 
-  // ── ROAS ──────────────────────────────────────────
+  // ROAS
   mk('chartRoas', 'line', {
     labels,
     datasets: [{
-      data: roasArr,
-      borderColor: PALETTE[1], backgroundColor: PALETTE[1] + '22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
-      fill: true, tension: .3,
+      data: roas,
+      borderColor: PALETTE[1], backgroundColor: PALETTE[1]+'22',
+      borderWidth: 2.5, pointRadius: months.length===1?6:4,
+      pointHoverRadius: 7, fill: true, tension: .3,
     }]
-  }, baseOpts({
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y.toFixed(2)}x` } } },
-    scales: {
-      x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: {
-        ticks: { color:'#64748b', font:{size:10}, callback: v => v.toFixed(1)+'x' },
-        grid: { color: '#252d45' },
-        // Reference line at 3x would be ideal but skip for simplicity
-      }
-    }
-  }));
+  }, baseOpts(v=>v.toFixed(1)+'x', c=>` ${c.parsed.y.toFixed(2)}x`));
 
-  // ── Gross Margin % ────────────────────────────────
+  // Gross Margin %
   mk('chartMargin', 'line', {
     labels,
     datasets: [{
-      data: marginPcts,
-      borderColor: PALETTE[2], backgroundColor: PALETTE[2] + '22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
-      fill: true, tension: .3,
-      pointBackgroundColor: marginPcts.map(v => v != null && v < 0 ? RED_HEX : GREEN_HEX),
-      pointBorderColor:     marginPcts.map(v => v != null && v < 0 ? RED_HEX : GREEN_HEX),
+      data: margins,
+      borderColor: PALETTE[2], backgroundColor: PALETTE[2]+'22',
+      borderWidth: 2.5, pointRadius: months.length===1?6:4,
+      pointHoverRadius: 7, fill: true, tension: .3,
+      pointBackgroundColor: margins.map(v => v!=null && v<0 ? RED : GREEN),
+      pointBorderColor:     margins.map(v => v!=null && v<0 ? RED : GREEN),
     }]
-  }, baseOpts({
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y.toFixed(1)}%` } } },
-    scales: {
-      x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: { ticks:{color:'#64748b',font:{size:10}, callback: v => v+'%'}, grid:{color:'#252d45'} }
-    }
-  }));
+  }, baseOpts(v=>v+'%', c=>` ${c.parsed.y.toFixed(1)}%`));
 
-  // ── Gross Profit / Loss ───────────────────────────
+  // Profit / Loss
   mk('chartProfit', 'bar', {
     labels,
     datasets: [{
       data: profits,
-      backgroundColor: profits.map(v => v != null && v < 0 ? RED_HEX + 'bb' : GREEN_HEX + 'bb'),
-      borderColor:     profits.map(v => v != null && v < 0 ? RED_HEX : GREEN_HEX),
+      backgroundColor: profits.map(v => v!=null && v<0 ? RED+'bb' : GREEN+'bb'),
+      borderColor:     profits.map(v => v!=null && v<0 ? RED : GREEN),
       borderWidth: 1.5, borderRadius: 5,
     }]
-  }, baseOpts({
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ' ' + fc(c.parsed.y) } } },
-    scales: {
-      x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: { ticks:{color:'#64748b',font:{size:10}, callback: v => fc(v,0)}, grid:{color:'#252d45'} }
-    }
-  }));
+  }, baseOpts(v=>shortCurrency(v), c=>` ${fc(c.parsed.y)}`));
 
-  // ── Ad Spend Stacked ──────────────────────────────
+  // Ad Spend stacked
   mk('chartAdspend', 'bar', {
     labels,
     datasets: [
-      {
-        label: 'Google Ads',
-        data: google,
-        backgroundColor: PALETTE[0] + 'cc', borderColor: PALETTE[0],
-        borderWidth: 1, borderRadius: { topLeft:4, topRight:4 },
-      },
-      {
-        label: 'Meta Ads',
-        data: meta,
-        backgroundColor: PALETTE[5] + 'cc', borderColor: PALETTE[5],
-        borderWidth: 1,
-      }
+      { label:'Google Ads', data:google, backgroundColor:PALETTE[0]+'cc', borderColor:PALETTE[0], borderWidth:1, borderRadius:{topLeft:4,topRight:4} },
+      { label:'Meta Ads',   data:meta,   backgroundColor:PALETTE[5]+'cc', borderColor:PALETTE[5], borderWidth:1 }
     ]
   }, {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, position: 'bottom', labels: { color:'#64748b', boxWidth:10, padding:10, font:{size:10} } },
-      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ display:true, position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
+      tooltip:{ callbacks:{ label: c=>` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
     },
-    scales: {
-      x: { stacked: true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: { stacked: true, ticks:{color:'#64748b',font:{size:10}, callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'K':v)}, grid:{color:'#252d45'} }
+    scales:{
+      x:{ stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
+      y:{ stacked:true, ticks:{color:'#64748b',font:{size:10},callback:v=>shortCurrency(v)}, grid:{color:'#252d45'} }
     }
   });
 
-  // ── Orders ────────────────────────────────────────
+  // Orders
   mk('chartOrders', 'bar', {
     labels,
-    datasets: [{
+    datasets:[{
       data: orders,
-      backgroundColor: PALETTE[3] + '99', borderColor: PALETTE[3],
-      borderWidth: 1.5, borderRadius: 6,
+      backgroundColor: PALETTE[3]+'99', borderColor: PALETTE[3],
+      borderWidth:1.5, borderRadius:6,
     }]
-  }, baseOpts({
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y} orders` } } },
-    scales: {
-      x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} }
-    }
-  }));
+  }, baseOpts(v=>v, c=>` ${c.parsed.y} orders`));
 
-  // ── New vs Returning ──────────────────────────────
-  if (D.newRet.length) {
-    const nrLabels = D.newRet.map(r => MONTH_LABELS[MONTHS_ORDER.indexOf(r.month)] || r.month);
+  // New vs Returning
+  if (newRet.length) {
+    const nrLabels = newRet.map(r => MONTH_LABELS[MONTHS_ORDER.indexOf(r.month)] || r.month);
     mk('chartNewRet', 'bar', {
       labels: nrLabels,
-      datasets: [
-        { label: 'New',      data: D.newRet.map(r=>r.newCust),   backgroundColor: PALETTE[0]+'bb', borderColor: PALETTE[0], borderWidth:1 },
-        { label: 'Returning',data: D.newRet.map(r=>r.returning), backgroundColor: PALETTE[2]+'bb', borderColor: PALETTE[2], borderWidth:1 }
+      datasets:[
+        { label:'New',       data:newRet.map(r=>r.newCust),   backgroundColor:PALETTE[0]+'bb', borderColor:PALETTE[0], borderWidth:1 },
+        { label:'Returning', data:newRet.map(r=>r.returning), backgroundColor:PALETTE[2]+'bb', borderColor:PALETTE[2], borderWidth:1 }
       ]
     }, {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display:true, position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y}` } }
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:true, position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
+        tooltip:{ callbacks:{ label: c=>` ${c.dataset.label}: ${c.parsed.y}` } }
       },
-      scales: {
-        x: { stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-        y: { stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} }
+      scales:{
+        x:{ stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
+        y:{ stacked:true, ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} }
       }
     });
   }
 
-  // ── Conversions by Source ─────────────────────────
-  if (D.convSource.length) {
-    const convColors = [PALETTE[0], PALETTE[1], PALETTE[2], PALETTE[3], PALETTE[4]];
+  // Conversions by Source (always current month — not filtered)
+  if (D.convSource?.length) {
     mk('chartConvSource', 'doughnut', {
-      labels: D.convSource.map(c => c.source),
-      datasets: [{
-        data: D.convSource.map(c => c.count),
-        backgroundColor: convColors.map(c => c + 'cc'),
-        borderColor:     convColors,
-        borderWidth: 1.5, hoverOffset: 8,
+      labels: D.convSource.map(c=>c.source),
+      datasets:[{
+        data:  D.convSource.map(c=>c.count),
+        backgroundColor: PALETTE.slice(0,D.convSource.length).map(c=>c+'cc'),
+        borderColor:     PALETTE.slice(0,D.convSource.length),
+        borderWidth:1.5, hoverOffset:8,
       }]
     }, {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
-        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} orders` } }
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
+        tooltip:{ callbacks:{ label: c=>` ${c.label}: ${c.parsed} orders` } }
       },
-      cutout: '58%'
+      cutout:'58%'
     });
   }
 
-  // ── AOV ───────────────────────────────────────────
+  // AOV
   mk('chartAov', 'line', {
     labels,
-    datasets: [{
+    datasets:[{
       data: aovs,
-      borderColor: PALETTE[3], backgroundColor: PALETTE[3] + '22',
-      borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
-      fill: true, tension: .3,
+      borderColor:PALETTE[3], backgroundColor:PALETTE[3]+'22',
+      borderWidth:2.5, pointRadius:months.length===1?6:4,
+      pointHoverRadius:7, fill:true, tension:.3,
     }]
-  }, baseOpts({
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ' ' + fc(c.parsed.y, 2) } } },
-    scales: {
-      x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#252d45'} },
-      y: { ticks:{color:'#64748b',font:{size:10}, callback: v => fc(v)}, grid:{color:'#252d45'} }
-    }
-  }));
+  }, baseOpts(v=>fc(v), c=>` ${fc(c.parsed.y,2)}`));
 }
 
-/* ════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    TABLE
-════════════════════════════════════════════════════ */
-function renderTable() {
+══════════════════════════════════════════════════ */
+function renderTable(months) {
   const tbody = document.getElementById('perfBody');
   tbody.innerHTML = '';
 
-  const allRows = [...D.monthly];
-
-  // Append totals row if available
-  const t = D.totals;
-  if (t.revenue) {
-    allRows.push({
-      _total: true,
-      month: 'Total / Avg',
-      orders: t.orders, revenue: t.revenue, aov: t.aov, cogs: t.cogs,
-      googleAds: t.googleAds, metaAds: t.metaAds, mktPerOrder: t.mktPerOrder,
-      roas: t.roas, mktPctRev: t.mktPctRev, costPerOrder: t.costPerOrder,
-      marginPerOrder: t.marginPerOrder, grossMarginPct: t.grossMarginPct,
-      grossProfit: t.grossProfit
-    });
+  if (!months.length) {
+    tbody.innerHTML = `<tr><td class="no-data" colspan="15">No data for the selected period.</td></tr>`;
+    return;
   }
 
-  for (const row of allRows) {
-    const tr = document.createElement('tr');
-    if (row._total) tr.className = 'total-row';
+  // Compute totals row from filtered months
+  const k = computeKPIs(months);
+  const totalGoogle = months.reduce((s,m)=>s+(pv(m.googleAds)||0),0);
+  const totalMeta   = months.reduce((s,m)=>s+(pv(m.metaAds)||0),0);
 
+  for (const row of months) {
     const profit = pv(row.grossProfit);
     const margin = pv(row.grossMarginPct);
     const roas   = pv(row.roas);
+    tbody.appendChild(makeRow(
+      row.month, row.orders, row.revenue, row.aov, row.cogs,
+      row.googleAds, row.metaAds, row.mktPerOrder, row.roas, row.mktPctRev,
+      row.costPerOrder, row.marginPerOrder, row.grossMarginPct, row.grossProfit, row.dailyMktCost,
+      false, profit, margin, roas
+    ));
+  }
 
-    const roasCls = roas == null ? 'neu' : roas >= 3 ? 'pos' : roas >= 2 ? 'neu' : 'neg';
-    const marCls  = margin == null ? 'neu' : margin > 10 ? 'pos' : margin >= 0 ? 'neu' : 'neg';
-    const proCls  = profit == null ? 'neu' : profit > 0 ? 'pos' : 'neg';
+  if (months.length > 1) {
+    // Totals / Averages row
+    const avgRoasStr = k.avgRoas.toFixed(2)+'x';
+    const avgMrgStr  = k.avgMargin.toFixed(1)+'%';
+    tbody.appendChild(makeRow(
+      'Total / Avg',
+      fn(k.totalOrders), fc(k.totalRevenue), fc(k.aov,2),
+      '—',
+      fc(totalGoogle), totalMeta>0?fc(totalMeta):'—',
+      '—', avgRoasStr, k.avgMktPct.toFixed(1)+'%',
+      '—','—', avgMrgStr, fc(k.totalProfit),
+      '—',
+      true, k.totalProfit, k.avgMargin, k.avgRoas
+    ));
+  }
+}
 
-    tr.innerHTML = `
-      <td>${row.month}</td>
-      <td>${row.orders || '—'}</td>
-      <td>${row.revenue || '—'}</td>
-      <td>${row.aov || '—'}</td>
-      <td>${row.cogs || '—'}</td>
-      <td>${row.googleAds || '—'}</td>
-      <td>${row.metaAds || '—'}</td>
-      <td>${row.mktPerOrder || '—'}</td>
-      <td class="${roasCls}">${row.roas || '—'}</td>
-      <td>${row.mktPctRev || '—'}</td>
-      <td>${row.costPerOrder || '—'}</td>
-      <td>${row.marginPerOrder || '—'}</td>
-      <td class="${marCls}">${row.grossMarginPct || '—'}</td>
-      <td class="${proCls}">${row.grossProfit || '—'}</td>
-      <td>${row.dailyMktCost || '—'}</td>
-    `;
-    tbody.appendChild(tr);
+function makeRow(month, orders, revenue, aov, cogs, google, meta, mktPerOrder, roas, mktPctRev, costPerOrder, marginPerOrder, grossMarginPct, grossProfit, dailyMktCost, isTotal, profitN, marginN, roasN) {
+  const tr = document.createElement('tr');
+  if (isTotal) tr.className = 'total-row';
+  const roasCls = roasN==null?'neu': roasN>=3?'pos': roasN>=2?'neu':'neg';
+  const marCls  = marginN==null?'neu': marginN>10?'pos': marginN>=0?'neu':'neg';
+  const proCls  = profitN==null?'neu': profitN>0?'pos':'neg';
+  tr.innerHTML = `
+    <td>${month}</td>
+    <td>${orders||'—'}</td><td>${revenue||'—'}</td><td>${aov||'—'}</td>
+    <td>${cogs||'—'}</td><td>${google||'—'}</td><td>${meta||'—'}</td>
+    <td>${mktPerOrder||'—'}</td>
+    <td class="${roasCls}">${roas||'—'}</td>
+    <td>${mktPctRev||'—'}</td>
+    <td>${costPerOrder||'—'}</td><td>${marginPerOrder||'—'}</td>
+    <td class="${marCls}">${grossMarginPct||'—'}</td>
+    <td class="${proCls}">${grossProfit||'—'}</td>
+    <td>${dailyMktCost||'—'}</td>`;
+  return tr;
+}
+
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+function pv(str) {
+  if (!str) return null;
+  str = String(str).trim();
+  if (!str || str==='-') return null;
+  const neg = /^-|\(/.test(str);
+  const clean = str.replace(/[$,()%x\s]/g,'').replace(/^-/,'');
+  const n = parseFloat(clean);
+  return isNaN(n) ? null : (neg && n>0 ? -n : n);
+}
+
+function fc(n, decimals=0) {
+  if (n==null||isNaN(n)) return '—';
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(n);
+}
+function fn(n)        { return n!=null ? n.toLocaleString() : '—'; }
+function shortCurrency(v) {
+  if (Math.abs(v)>=1e6) return '$'+(v/1e6).toFixed(1)+'M';
+  if (Math.abs(v)>=1e3) return '$'+(v/1e3).toFixed(0)+'K';
+  return '$'+v.toFixed(0);
+}
+function setText(id,val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+
+function showOverlay(type, on, msg='') {
+  if (type==='loading') document.getElementById('loadingOverlay').classList.toggle('hidden',!on);
+  if (type==='error') {
+    document.getElementById('errorOverlay').classList.toggle('hidden',!on);
+    if (on) { document.getElementById('errMsg').textContent=msg; document.getElementById('errUrl').textContent=CSV_URL; }
   }
 }
 </script>
