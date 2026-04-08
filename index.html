@@ -407,7 +407,7 @@
      ════════════════════════════════════════════════════════════════ -->
 <script>
   const SPREADSHEET_ID = "1mjzGs7BwVLm4MmwH9dI9duYHW1zO4nMIpRcc_epnU9A";
-  const GID            = "0";   // ← Change to your sheet tab's GID
+  const GID            = "1198665066";   // Sheet tab GID
 
   const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
 
@@ -664,7 +664,7 @@ async function loadData() {
     init();
     document.getElementById('lastUpdated').textContent =
       'Updated ' + new Date().toLocaleTimeString();
-    if (GID !== "0") document.getElementById('setupNotice').classList.add('hidden');
+    document.getElementById('setupNotice').classList.add('hidden');
   } catch (e) {
     showError(true, e.message);
   }
