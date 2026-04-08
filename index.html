@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WCE Online Sales Dashboard</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Chart.js Adapter for time scale -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- Papa Parse (CSV parser) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0c0e14;
+      --surface:    #13161f;
+      --surface2:   #1c2030;
+      --border:     #262c42;
+      --accent:     #3b82f6;
+      --accent2:    #8b5cf6;
+      --accent3:    #10b981;
+      --accent4:    #f59e0b;
+      --accent5:    #ef4444;
+      --accent6:    #ec4899;
+      --text:       #e2e8f0;
+      --text-muted: #64748b;
+      --radius:     12px;
+      --radius-sm:  8px;
+    }
+
+    html { font-size: 15px; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ─── Top Bar ───────────────────────────────────────────────── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 62px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,.5);
+    }
+
+    .topbar-brand { display: flex; align-items: center; gap: .75rem; }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+
+    .brand-name { font-size: 1rem; font-weight: 700; letter-spacing: .01em; }
+    .brand-sub  { font-size: .7rem; color: var(--text-muted); letter-spacing: .07em; text-transform: uppercase; }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+
+    .last-updated { font-size: .78rem; color: var(--text-muted); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .45rem .9rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: .82rem;
+      transition: background .15s, border-color .15s;
+    }
+    .btn:hover { background: var(--border); border-color: var(--accent); }
+    .btn svg { width: 14px; height: 14px; }
+
+    /* ─── Main ───────────────────────────────────────────────────── */
+    .main {
+      padding: 2rem;
+      max-width: 1700px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .85rem;
+    }
+
+    /* ─── KPI Cards ──────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.35rem 1.1rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+    }
+    .kpi-card:hover {
+      border-color: var(--card-accent, var(--accent));
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-accent, var(--accent));
+    }
+
+    .kpi-label {
+      font-size: .72rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: .45rem;
+    }
+    .kpi-value {
+      font-size: 1.85rem; font-weight: 800; line-height: 1.1;
+      color: var(--card-accent, var(--accent));
+    }
+    .kpi-sub { font-size: .75rem; color: var(--text-muted); margin-top: .3rem; }
+    .kpi-delta {
+      font-size: .72rem; font-weight: 700;
+      margin-top: .3rem; display: inline-flex; align-items: center; gap: .2rem;
+    }
+    .delta-up   { color: var(--accent3); }
+    .delta-down { color: var(--accent5); }
+
+    .kpi-icon {
+      position: absolute; right: 1rem; top: 50%;
+      transform: translateY(-50%);
+      font-size: 2.4rem; opacity: .06; pointer-events: none;
+    }
+
+    /* ─── Cards / Charts ─────────────────────────────────────────── */
+    .charts-grid-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .charts-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 1100px) {
+      .charts-grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .charts-grid-3, .charts-grid-2 { grid-template-columns: 1fr; }
+      .main { padding: 1rem; }
+      .topbar { padding: 0 1rem; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.3rem;
+    }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.1rem;
+    }
+    .card-title { font-size: .88rem; font-weight: 700; }
+    .card-badge {
+      font-size: .68rem; font-weight: 700; letter-spacing: .05em;
+      background: rgba(59,130,246,.15); color: var(--accent);
+      padding: .2rem .55rem; border-radius: 99px; text-transform: uppercase;
+    }
+
+    .chart-wrap         { position: relative; height: 240px; }
+    .chart-wrap.tall    { height: 290px; }
+    .chart-wrap.short   { height: 190px; }
+
+    /* ─── Top list (in card) ────────────────────────────────────── */
+    .top-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+
+    .top-list li {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: .83rem;
+    }
+
+    .top-list .rank {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 700; color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .top-list .rank.gold   { background: rgba(245,158,11,.15); border-color: var(--accent4); color: var(--accent4); }
+    .top-list .rank.silver { background: rgba(148,163,184,.12); border-color: #94a3b8; color: #94a3b8; }
+    .top-list .rank.bronze { background: rgba(180,120,80,.12); border-color: #b47850; color: #b47850; }
+
+    .top-list .item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-list .item-val  { font-weight: 700; color: var(--accent3); white-space: nowrap; }
+
+    .top-list .bar-track {
+      width: 60px; height: 5px;
+      background: var(--surface2); border-radius: 99px; overflow: hidden;
+    }
+    .top-list .bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    /* ─── Filters ────────────────────────────────────────────────── */
+    .filters-bar {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: .65rem; margin-bottom: 1rem;
+    }
+
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg {
+      position: absolute; left: .7rem; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px; color: var(--text-muted); pointer-events: none;
+    }
+
+    input[type="search"], select {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      padding: .5rem .8rem; font-size: .83rem; outline: none;
+      transition: border-color .15s;
+    }
+    input[type="search"] { padding-left: 2.2rem; width: 100%; }
+    input[type="search"]:focus, select:focus { border-color: var(--accent); }
+    select { cursor: pointer; }
+    select option { background: var(--surface2); }
+
+    .filter-label { font-size: .75rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* ─── Table ──────────────────────────────────────────────────── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+
+    thead th {
+      background: var(--surface2);
+      padding: .7rem 1rem;
+      text-align: left;
+      font-size: .68rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      cursor: pointer; user-select: none;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:hover { color: var(--text); }
+    thead th .sort-icon { opacity: .35; margin-left: .25rem; font-size: .65rem; }
+    thead th.sort-asc .sort-icon,
+    thead th.sort-desc .sort-icon { opacity: 1; color: var(--accent); }
+
+    tbody tr { border-top: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: var(--surface2); }
+
+    td { padding: .65rem 1rem; vertical-align: middle; }
+
+    /* ─── Cell Formatters ────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: .18rem .6rem; border-radius: 99px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .badge-green  { background: rgba(16,185,129,.14); color: #10b981; }
+    .badge-blue   { background: rgba(59,130,246,.14); color: #3b82f6; }
+    .badge-amber  { background: rgba(245,158,11,.14);  color: #f59e0b; }
+    .badge-red    { background: rgba(239,68,68,.14);   color: #ef4444; }
+    .badge-purple { background: rgba(139,92,246,.14);  color: #8b5cf6; }
+    .badge-pink   { background: rgba(236,72,153,.14);  color: #ec4899; }
+    .badge-gray   { background: rgba(100,116,139,.14); color: #94a3b8; }
+
+    .currency { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .currency.high { color: var(--accent3); }
+    .currency.mid  { color: var(--text); }
+
+    .qty-pill {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: .1rem .55rem;
+      font-size: .78rem; font-weight: 600;
+    }
+
+    /* ─── Pagination ─────────────────────────────────────────────── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .8rem 1rem; border-top: 1px solid var(--border);
+      font-size: .8rem; color: var(--text-muted);
+      flex-wrap: wrap; gap: .5rem;
+    }
+
+    .page-btns { display: flex; gap: .3rem; }
+
+    .page-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); width: 28px; height: 28px;
+      border-radius: 6px; cursor: pointer; font-size: .78rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .1s, border-color .1s;
+    }
+    .page-btn:hover:not(:disabled) { background: var(--border); border-color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .page-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    /* ─── Loading / Error ────────────────────────────────────────── */
+    .state-overlay {
+      position: fixed; inset: 0;
+      background: rgba(12,14,20,.88);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999; gap: 1rem;
+    }
+    .state-overlay.hidden { display: none; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .state-text { color: var(--text-muted); font-size: .88rem; }
+
+    .error-box {
+      background: var(--surface); border: 1px solid var(--accent5);
+      border-radius: var(--radius); padding: 2rem;
+      max-width: 500px; text-align: center;
+    }
+    .error-box h3 { color: var(--accent5); margin-bottom: .5rem; font-size: 1.1rem; }
+    .error-box p  { color: var(--text-muted); font-size: .83rem; line-height: 1.65; }
+    .error-box code {
+      display: block; background: var(--surface2);
+      border-radius: 6px; padding: .5rem .75rem;
+      margin: .75rem 0; font-size: .76rem; color: var(--accent);
+      word-break: break-all; text-align: left;
+    }
+
+    /* ─── Setup notice ───────────────────────────────────────────── */
+    .setup-notice {
+      background: rgba(59,130,246,.07);
+      border: 1px solid rgba(59,130,246,.3);
+      border-radius: var(--radius);
+      padding: .9rem 1.1rem; font-size: .81rem; color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      display: flex; align-items: flex-start; gap: .65rem;
+    }
+    .setup-notice.hidden { display: none; }
+    .setup-notice svg { flex-shrink: 0; margin-top: .15rem; color: var(--accent); }
+    .setup-notice strong { color: var(--text); }
+    .setup-notice code {
+      background: var(--surface2); padding: .1rem .35rem;
+      border-radius: 4px; color: var(--accent); font-size: .78rem;
+    }
+
+    .no-data { text-align: center; color: var(--text-muted); padding: 3rem 1rem; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.75rem 0; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CONFIGURATION
+     ════════════════════════════════════════════════════════════════
+     1. Set GID to the sheet tab's GID (visible in the URL when you
+        click the tab: &gid=XXXXXXXX).
+     2. Make sure the sheet is published:
+        File → Share → Publish to web → select the tab → CSV → Publish
+     3. Adjust COLUMN_MAP if your headers differ from the defaults.
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+  const SPREADSHEET_ID = "1mjzGs7BwVLm4MmwH9dI9duYHW1zO4nMIpRcc_epnU9A";
+  const GID            = "0";   // ← Change to your sheet tab's GID
+
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
+
+  // Map internal field names → possible header spellings (case-insensitive, first match wins).
+  const COLUMN_MAP = {
+    orderId:   ["order id", "order #", "order no", "id", "transaction id", "sale id"],
+    date:      ["date", "order date", "sale date", "transaction date", "purchase date"],
+    customer:  ["customer", "customer name", "client", "buyer", "name"],
+    product:   ["product", "product name", "item", "item name", "description"],
+    category:  ["category", "product category", "dept", "department", "type", "line"],
+    region:    ["region", "area", "territory", "location", "state", "zone", "market"],
+    channel:   ["channel", "sales channel", "source", "platform", "medium"],
+    rep:       ["rep", "sales rep", "salesperson", "agent", "employee", "associate"],
+    quantity:  ["quantity", "qty", "units", "items", "count"],
+    price:     ["price", "unit price", "rate", "unit cost"],
+    revenue:   ["revenue", "total", "amount", "sales", "total sales", "total revenue",
+                 "gross", "subtotal", "sale amount", "order total", "total amount"],
+    profit:    ["profit", "gross profit", "margin $", "net"],
+    status:    ["status", "order status", "fulfillment", "payment status"],
+  };
+
+  const PAGE_SIZE   = 15;
+  const CURRENCY    = 'USD';   // change to match your data (e.g. 'GBP', 'EUR')
+  const TOP_N       = 7;       // rows in top-products / top-customers lists
+</script>
+
+<!-- Loading -->
+<div class="state-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="state-text">Loading sales data…</div>
+</div>
+
+<!-- Error -->
+<div class="state-overlay hidden" id="errorOverlay">
+  <div class="error-box">
+    <h3>⚠ Could not load data</h3>
+    <p id="errorMsg">An error occurred while fetching the spreadsheet.</p>
+    <p style="margin-top:.6rem">
+      Ensure the sheet is published:<br>
+      <strong>File → Share → Publish to web → CSV</strong>
+    </p>
+    <code id="errorUrl"></code>
+    <button class="btn" style="margin:.5rem auto 0;display:flex" onclick="loadData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4v6h6M23 20v-6h-6"/>
+        <path d="M3.51 9a9 9 0 0114.38-3.36L23 10M1 14l5.11 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      Retry
+    </button>
+  </div>
+</div>
+
+<!-- ─── Top Bar ───────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">🛒</div>
+    <div>
+      <div class="brand-name">WCE Online Sales</div>
+      <div class="brand-sub">Sales Dashboard</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="last-updated" id="lastUpdated"></span>
+    <button class="btn" onclick="loadData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4v6h6M23 20v-6h-6"/>
+        <path d="M3.51 9a9 9 0 0114.38-3.36L23 10M1 14l5.11 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<!-- ─── Main ─────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <div class="setup-notice" id="setupNotice">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>
+      <strong>Setup:</strong> Set the <code>GID</code> constant to your sheet tab's GID
+      (the number after <code>&amp;gid=</code> in the sheet URL), then ensure the sheet is
+      published via <strong>File → Share → Publish to web → CSV</strong>.
+    </span>
+  </div>
+
+  <!-- KPIs -->
+  <p class="section-title">At a Glance</p>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--card-accent:var(--accent3)">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpiRevenue">—</div>
+      <div class="kpi-sub" id="kpiRevenueSub">all orders</div>
+      <div class="kpi-icon">💰</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:var(--accent)">
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value" id="kpiOrders">—</div>
+      <div class="kpi-sub" id="kpiOrdersSub">transactions</div>
+      <div class="kpi-icon">📦</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:var(--accent4)">
+      <div class="kpi-label">Avg Order Value</div>
+      <div class="kpi-value" id="kpiAOV">—</div>
+      <div class="kpi-sub">per transaction</div>
+      <div class="kpi-icon">🧾</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:var(--accent2)">
+      <div class="kpi-label">Units Sold</div>
+      <div class="kpi-value" id="kpiUnits">—</div>
+      <div class="kpi-sub" id="kpiUnitsSub">total quantity</div>
+      <div class="kpi-icon">📊</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:var(--accent6)">
+      <div class="kpi-label">Unique Customers</div>
+      <div class="kpi-value" id="kpiCustomers">—</div>
+      <div class="kpi-sub" id="kpiCustomersSub"></div>
+      <div class="kpi-icon">👤</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:var(--accent5)">
+      <div class="kpi-label">Categories</div>
+      <div class="kpi-value" id="kpiCats">—</div>
+      <div class="kpi-sub" id="kpiCatsSub">product lines</div>
+      <div class="kpi-icon">🏷️</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Revenue Over Time (wide) + Revenue by Category (narrow) -->
+  <p class="section-title">Trends &amp; Breakdown</p>
+  <div class="charts-grid-3">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Revenue Over Time</span>
+        <span class="card-badge" id="timeGroupLabel">Monthly</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="revenueTimeChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Revenue by Category</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="catChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Revenue by Region</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="regionChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Orders by Channel (bar) + Top Products + Top Customers -->
+  <div class="charts-grid-3">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Orders by Channel</span>
+      </div>
+      <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Top Products</span>
+        <span class="card-badge">by revenue</span>
+      </div>
+      <ul class="top-list" id="topProductsList"></ul>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Top Customers</span>
+        <span class="card-badge">by revenue</span>
+      </div>
+      <ul class="top-list" id="topCustomersList"></ul>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Table -->
+  <p class="section-title">Order Records</p>
+
+  <div class="filters-bar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="search" id="searchInput" placeholder="Search orders…" oninput="applyFilters()" />
+    </div>
+    <span class="filter-label">Category:</span>
+    <select id="catFilter" onchange="applyFilters()"><option value="">All</option></select>
+    <span class="filter-label">Region:</span>
+    <select id="regionFilter" onchange="applyFilters()"><option value="">All</option></select>
+    <span class="filter-label">Status:</span>
+    <select id="statusFilter" onchange="applyFilters()"><option value="">All</option></select>
+    <span class="filter-label">Show:</span>
+    <select id="pageSizeSelect" onchange="changePageSize()">
+      <option value="15">15</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+  </div>
+
+  <div class="table-card">
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination">
+      <span id="paginationInfo"></span>
+      <div class="page-btns" id="pageBtns"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let allRows      = [];
+let columns      = [];
+let fieldMap     = {};
+let filteredRows = [];
+let sortCol      = null;
+let sortDir      = 1;
+let currentPage  = 1;
+let pageSize     = PAGE_SIZE;
+
+const chartInstances = {};
+
+/* ═══════════════════════════════════════════════════════════
+   BOOTSTRAP
+═══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+  showLoading(true);
+  showError(false);
+  try {
+    const res = await fetch(csvUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — check the sheet is published as CSV.`);
+    const text = await res.text();
+    if (!text.trim()) throw new Error('The sheet returned empty content.');
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: false });
+    if (!parsed.data.length) throw new Error('No data rows found in the sheet.');
+    allRows  = parsed.data;
+    columns  = parsed.meta.fields || Object.keys(allRows[0]);
+    fieldMap = buildFieldMap(columns);
+    init();
+    document.getElementById('lastUpdated').textContent =
+      'Updated ' + new Date().toLocaleTimeString();
+    if (GID !== "0") document.getElementById('setupNotice').classList.add('hidden');
+  } catch (e) {
+    showError(true, e.message);
+  }
+  showLoading(false);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FIELD MAP
+═══════════════════════════════════════════════════════════ */
+function buildFieldMap(cols) {
+  const map = {};
+  const lc  = cols.map(c => c.toLowerCase().trim());
+  for (const [field, aliases] of Object.entries(COLUMN_MAP)) {
+    for (const alias of aliases) {
+      const idx = lc.indexOf(alias.toLowerCase());
+      if (idx !== -1) { map[field] = cols[idx]; break; }
+    }
+  }
+  return map;
+}
+
+function col(field)       { return fieldMap[field]; }
+function get(row, field)  { const c = col(field); return c ? (row[c] ?? '') : ''; }
+function num(row, field)  { return parseFloat(get(row, field).toString().replace(/[^0-9.\-]/g,'')) || 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+function init() {
+  populateFilters();
+  applyFilters();    // also calls renderTable
+  buildKPIs(allRows);
+  buildAllCharts(allRows);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KPIs
+═══════════════════════════════════════════════════════════ */
+function buildKPIs(rows) {
+  const hasRev  = !!col('revenue');
+  const hasQty  = !!col('quantity');
+  const hasCust = !!col('customer');
+  const hasCat  = !!col('category');
+
+  const revenue   = hasRev  ? rows.reduce((s,r) => s + num(r,'revenue'), 0) : null;
+  const units     = hasQty  ? rows.reduce((s,r) => s + num(r,'quantity'), 0) : null;
+  const customers = hasCust ? new Set(rows.map(r => get(r,'customer')).filter(Boolean)) : null;
+  const cats      = hasCat  ? new Set(rows.map(r => get(r,'category')).filter(Boolean)) : null;
+  const regions   = col('region') ? new Set(rows.map(r=>get(r,'region')).filter(Boolean)) : null;
+  const aov       = revenue !== null ? revenue / rows.length : null;
+
+  setText('kpiRevenue',   revenue !== null ? fmtCurrency(revenue) : 'N/A');
+  setText('kpiRevenueSub', rows.length + ' orders');
+  setText('kpiOrders',    rows.length.toLocaleString());
+  setText('kpiOrdersSub', regions ? regions.size + ' region' + (regions.size===1?'':'s') : 'total');
+  setText('kpiAOV',       aov !== null ? fmtCurrency(aov) : 'N/A');
+  setText('kpiUnits',     units !== null ? units.toLocaleString() : 'N/A');
+  setText('kpiUnitsSub',  hasQty ? 'avg ' + (units/rows.length).toFixed(1) + ' per order' : '');
+  setText('kpiCustomers', customers ? customers.size.toLocaleString() : 'N/A');
+  setText('kpiCustomersSub', customers ? 'avg ' + fmtCurrency(revenue/customers.size) + '/customer' : '');
+  setText('kpiCats',      cats ? cats.size : 'N/A');
+  setText('kpiCatsSub',   cats && cats.size ? [...cats].slice(0,2).join(', ') + (cats.size>2?'…':'') : '');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════════ */
+const PALETTE = [
+  '#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444',
+  '#ec4899','#06b6d4','#84cc16','#f97316','#a78bfa'
+];
+
+function buildAllCharts(rows) {
+  buildRevenueTimeChart(rows);
+  buildCatChart(rows);
+  buildRegionChart(rows);
+  buildChannelChart(rows);
+  buildTopList('topProductsList', rows, 'product', 'revenue');
+  buildTopList('topCustomersList', rows, 'customer', 'revenue');
+}
+
+/* Revenue over time (line) */
+function buildRevenueTimeChart(rows) {
+  if (!col('date') || !col('revenue')) {
+    return noChart('revenueTimeChart', 'No date / revenue columns detected');
+  }
+
+  // Group by month (YYYY-MM)
+  const map = {};
+  for (const r of rows) {
+    const raw = get(r,'date');
+    const d   = parseDate(raw);
+    if (!d) continue;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    map[key]  = (map[key] || 0) + num(r,'revenue');
+  }
+  const keys   = Object.keys(map).sort();
+  const label  = keys.length > 24 ? 'Weekly' : 'Monthly';
+  setText('timeGroupLabel', label);
+
+  destroyChart('revenueTimeChart');
+  chartInstances['revenueTimeChart'] = new Chart(
+    document.getElementById('revenueTimeChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: keys,
+        datasets: [{
+          label: 'Revenue',
+          data: keys.map(k => +map[k].toFixed(2)),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,.12)',
+          borderWidth: 2,
+          pointRadius: keys.length > 30 ? 0 : 3,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: .3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' ' + fmtCurrency(ctx.parsed.y) } }
+        },
+        scales: {
+          x: { ticks: { color:'#64748b', font:{size:10}, maxTicksLimit:12 }, grid:{color:'#262c42'} },
+          y: {
+            ticks: { color:'#64748b', font:{size:10}, callback: v => fmtCurrencyShort(v) },
+            grid:  { color:'#262c42' }
+          }
+        }
+      }
+    }
+  );
+}
+
+/* Revenue by category (doughnut) */
+function buildCatChart(rows) {
+  if (!col('category') || !col('revenue')) {
+    return noChart('catChart', 'No category / revenue columns');
+  }
+  const map = groupSum(rows, 'category', 'revenue');
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  destroyChart('catChart');
+  chartInstances['catChart'] = new Chart(
+    document.getElementById('catChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: sorted.map(e=>e[0]),
+        datasets: [{
+          data: sorted.map(e=>+e[1].toFixed(2)),
+          backgroundColor: PALETTE.map(c=>c+'bb'),
+          borderColor:     PALETTE,
+          borderWidth: 1.5, hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'bottom', labels:{ color:'#64748b', boxWidth:10, padding:10, font:{size:10} } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtCurrency(ctx.parsed)}` } }
+        },
+        cutout: '58%'
+      }
+    }
+  );
+}
+
+/* Revenue by region (horizontal bar) */
+function buildRegionChart(rows) {
+  if (!col('region') || !col('revenue')) {
+    return noChart('regionChart', 'No region / revenue columns');
+  }
+  const map    = groupSum(rows, 'region', 'revenue');
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  destroyChart('regionChart');
+  chartInstances['regionChart'] = new Chart(
+    document.getElementById('regionChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(e=>e[0]),
+        datasets: [{
+          label: 'Revenue',
+          data: sorted.map(e=>+e[1].toFixed(2)),
+          backgroundColor: PALETTE.map(c=>c+'99'),
+          borderColor:     PALETTE,
+          borderWidth: 1.5, borderRadius: 5,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display:false },
+          tooltip: { callbacks:{ label: ctx => ' '+fmtCurrency(ctx.parsed.x) } }
+        },
+        scales: {
+          x: { ticks:{ color:'#64748b', font:{size:10}, callback: v=>fmtCurrencyShort(v) }, grid:{color:'#262c42'} },
+          y: { ticks:{ color:'#64748b', font:{size:10} }, grid:{display:false} }
+        }
+      }
+    }
+  );
+}
+
+/* Orders by channel (bar) */
+function buildChannelChart(rows) {
+  const field = col('channel') ? 'channel' : col('region') ? 'region' : null;
+  if (!field) return noChart('channelChart', 'No channel / region column found');
+
+  const map    = {};
+  for (const r of rows) {
+    const k = get(r, field) || 'Unknown';
+    map[k]  = (map[k]||0) + 1;
+  }
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  destroyChart('channelChart');
+  chartInstances['channelChart'] = new Chart(
+    document.getElementById('channelChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(e=>e[0]),
+        datasets: [{
+          label: 'Orders',
+          data: sorted.map(e=>e[1]),
+          backgroundColor: PALETTE.map(c=>c+'99'),
+          borderColor:     PALETTE,
+          borderWidth: 1.5, borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend:  { display:false },
+          tooltip: { callbacks:{ label: ctx => ` ${ctx.parsed.y} orders` } }
+        },
+        scales: {
+          x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#262c42'} },
+          y: { ticks:{color:'#64748b',font:{size:10},stepSize:1}, grid:{color:'#262c42'} }
+        }
+      }
+    }
+  );
+}
+
+/* Generic top-N list */
+function buildTopList(elId, rows, groupField, valueField) {
+  const el = document.getElementById(elId);
+  if (!col(groupField) || !col(valueField)) {
+    el.innerHTML = `<li style="color:var(--text-muted);font-size:.8rem">No ${groupField} / ${valueField} column found.</li>`;
+    return;
+  }
+  const map    = groupSum(rows, groupField, valueField);
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, TOP_N);
+  const max    = sorted[0]?.[1] || 1;
+
+  el.innerHTML = '';
+  sorted.forEach(([name, val], i) => {
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const pct = (val/max*100).toFixed(0);
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="rank ${rankClass}">${i+1}</span>
+      <span class="item-name" title="${escHtml(name)}">${escHtml(name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <span class="item-val">${fmtCurrency(val)}</span>`;
+    el.appendChild(li);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════════════════ */
+function populateFilters() {
+  fillSelect('catFilter',    allRows, 'category');
+  fillSelect('regionFilter', allRows, 'region');
+  fillSelect('statusFilter', allRows, 'status');
+}
+
+function fillSelect(elId, rows, field) {
+  const sel = document.getElementById(elId);
+  const values = [...new Set(rows.map(r=>get(r,field)).filter(Boolean))].sort();
+  if (!values.length) {
+    sel.previousElementSibling.style.display = 'none';
+    sel.style.display = 'none';
+    return;
+  }
+  values.forEach(v => {
+    const o = document.createElement('option'); o.value=v; o.textContent=v;
+    sel.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const cat    = document.getElementById('catFilter').value;
+  const region = document.getElementById('regionFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  filteredRows = allRows.filter(row => {
+    if (cat    && get(row,'category') !== cat)    return false;
+    if (region && get(row,'region')   !== region) return false;
+    if (status && get(row,'status')   !== status) return false;
+    if (q) {
+      const hay = columns.map(c => row[c]||'').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════════════════════ */
+function renderTable() {
+  if (sortCol) {
+    filteredRows = [...filteredRows].sort((a,b) => {
+      const av = a[sortCol]||'', bv = b[sortCol]||'';
+      const an = parseFloat(String(av).replace(/[^0-9.\-]/g,'')),
+            bn = parseFloat(String(bv).replace(/[^0-9.\-]/g,''));
+      if (!isNaN(an) && !isNaN(bn)) return (an-bn)*sortDir;
+      return String(av).localeCompare(String(bv))*sortDir;
+    });
+  }
+
+  const total = filteredRows.length;
+  const pages = Math.max(1, Math.ceil(total/pageSize));
+  currentPage = Math.min(currentPage, pages);
+  const start = (currentPage-1)*pageSize;
+  const slice = filteredRows.slice(start, start+pageSize);
+
+  renderHead();
+  renderBody(slice);
+  renderPagination(total, pages);
+}
+
+function renderHead() {
+  const thead = document.getElementById('tableHead');
+  const tr    = document.createElement('tr');
+  columns.forEach(c => {
+    const th    = document.createElement('th');
+    const isAct = sortCol===c;
+    th.className = isAct ? (sortDir===1?'sort-asc':'sort-desc') : '';
+    th.innerHTML = escHtml(c) +
+      `<span class="sort-icon">${isAct?(sortDir===1?'▲':'▼'):'⇅'}</span>`;
+    th.addEventListener('click', ()=>toggleSort(c));
+    tr.appendChild(th);
+  });
+  thead.innerHTML = '';
+  thead.appendChild(tr);
+}
+
+function renderBody(rows) {
+  const tbody = document.getElementById('tableBody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td class="no-data" colspan="${columns.length}">No matching records.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = '';
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    columns.forEach(c => {
+      const td = document.createElement('td');
+      td.innerHTML = formatCell(c, row[c]??'');
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+/* Smart cell renderer */
+function formatCell(colName, raw) {
+  const str = String(raw).trim();
+  if (!str) return '<span style="color:var(--text-muted)">—</span>';
+
+  // Revenue / price / profit → currency
+  if (colName === col('revenue') || colName === col('price') || colName === col('profit')) {
+    const n = parseFloat(str.replace(/[^0-9.\-]/g,''));
+    if (!isNaN(n)) {
+      const cls = n >= 500 ? 'high' : 'mid';
+      return `<span class="currency ${cls}">${fmtCurrency(n)}</span>`;
+    }
+  }
+
+  // Quantity
+  if (colName === col('quantity')) {
+    const n = parseFloat(str);
+    if (!isNaN(n)) return `<span class="qty-pill">${n.toLocaleString()}</span>`;
+  }
+
+  // Date → friendly
+  if (colName === col('date')) {
+    const d = parseDate(str);
+    if (d) return `<span style="white-space:nowrap">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>`;
+  }
+
+  // Order ID → muted mono
+  if (colName === col('orderId')) {
+    return `<span style="font-family:monospace;font-size:.78rem;color:var(--text-muted)">${escHtml(str)}</span>`;
+  }
+
+  // Status → badge
+  if (colName === col('status')) {
+    return `<span class="badge ${statusBadge(str)}">${escHtml(str)}</span>`;
+  }
+
+  // Category → blue badge
+  if (colName === col('category')) {
+    return `<span class="badge badge-blue">${escHtml(str)}</span>`;
+  }
+
+  // Region → purple badge
+  if (colName === col('region')) {
+    return `<span class="badge badge-purple">${escHtml(str)}</span>`;
+  }
+
+  // Channel → pink badge
+  if (colName === col('channel')) {
+    return `<span class="badge badge-pink">${escHtml(str)}</span>`;
+  }
+
+  return escHtml(str);
+}
+
+function statusBadge(s) {
+  const lc = s.toLowerCase();
+  if (/complet|paid|delivered|success|shipped|closed/i.test(lc)) return 'badge-green';
+  if (/pending|processing|open|in.progress/i.test(lc))           return 'badge-amber';
+  if (/cancel|refund|return|fail|void/i.test(lc))                return 'badge-red';
+  return 'badge-gray';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SORT
+═══════════════════════════════════════════════════════════ */
+function toggleSort(c) {
+  if (sortCol===c) sortDir*=-1; else { sortCol=c; sortDir=1; }
+  renderTable();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGINATION
+═══════════════════════════════════════════════════════════ */
+function renderPagination(total, pages) {
+  const s = (currentPage-1)*pageSize+1;
+  const e = Math.min(currentPage*pageSize, total);
+  setText('paginationInfo', total ? `Showing ${s}–${e} of ${total.toLocaleString()} records` : 'No records');
+
+  const container = document.getElementById('pageBtns');
+  container.innerHTML='';
+  addPageBtn(container,'‹', currentPage>1,   false, ()=>{currentPage--;renderTable();});
+  pageRange(currentPage,pages).forEach(p=>{
+    if(p==='…'){
+      const sp=document.createElement('span');
+      sp.textContent='…'; sp.style.cssText='color:var(--text-muted);padding:0 .2rem;line-height:28px';
+      container.appendChild(sp);
+    } else { addPageBtn(container,p,true,p===currentPage,()=>{currentPage=p;renderTable();}); }
+  });
+  addPageBtn(container,'›', currentPage<pages, false, ()=>{currentPage++;renderTable();});
+}
+
+function addPageBtn(parent, label, enabled, active, fn) {
+  const btn = document.createElement('button');
+  btn.className='page-btn'+(active?' active':'');
+  btn.textContent=label; btn.disabled=!enabled;
+  btn.addEventListener('click',fn); parent.appendChild(btn);
+}
+
+function pageRange(cur,total){
+  if(total<=7)return Array.from({length:total},(_,i)=>i+1);
+  if(cur<=4)  return[1,2,3,4,5,'…',total];
+  if(cur>=total-3)return[1,'…',total-4,total-3,total-2,total-1,total];
+  return[1,'…',cur-1,cur,cur+1,'…',total];
+}
+
+function changePageSize(){
+  pageSize=parseInt(document.getElementById('pageSizeSelect').value);
+  currentPage=1; renderTable();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════ */
+function groupSum(rows, groupField, valField) {
+  const map = {};
+  for (const r of rows) {
+    const k = get(r, groupField) || 'Unknown';
+    map[k]  = (map[k]||0) + num(r, valField);
+  }
+  return map;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return d;
+  // Try DD/MM/YYYY
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) return new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
+  return null;
+}
+
+const fmtCurrency = n =>
+  new Intl.NumberFormat('en-US', { style:'currency', currency: CURRENCY,
+    minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+function fmtCurrencyShort(n) {
+  if (Math.abs(n) >= 1e6) return '$' + (n/1e6).toFixed(1)+'M';
+  if (Math.abs(n) >= 1e3) return '$' + (n/1e3).toFixed(1)+'K';
+  return '$' + n.toFixed(0);
+}
+
+function setText(id, val) {
+  const el=document.getElementById(id); if(el) el.textContent=val;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function noChart(id, msg) {
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.font='13px Segoe UI'; ctx.fillStyle='#64748b'; ctx.textAlign='center';
+  ctx.fillText(msg, canvas.width/2, canvas.height/2);
+}
+
+function showLoading(on) {
+  document.getElementById('loadingOverlay').classList.toggle('hidden',!on);
+}
+
+function showError(on, msg='') {
+  document.getElementById('errorOverlay').classList.toggle('hidden',!on);
+  if (on) { setText('errorMsg',msg); document.getElementById('errorUrl').textContent=csvUrl; }
+}
+</script>
+</body>
+</html>
