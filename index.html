@@ -254,10 +254,13 @@
   const GID            = "1198665066";   // "Ad Spend & Margin Dashboard" tab
   const CSV_URL        = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
 
-  // P&L Sheet
+  // P&L Sheets
   const PL_SPREADSHEET_ID = "1xks-eRawLAX-GfONfC4DctJQdQD9sRC2DOwOM5WrrXY";
-  const PL_GID            = "1547773303";   // "2026" tab
-  const PL_CSV_URL        = `https://docs.google.com/spreadsheets/d/${PL_SPREADSHEET_ID}/export?format=csv&gid=${PL_GID}`;
+  const PL_GIDS = {
+    '2026': '1547773303',
+    '2025': '297808911',
+  };
+  const plCsvUrl = (year) => `https://docs.google.com/spreadsheets/d/${PL_SPREADSHEET_ID}/export?format=csv&gid=${PL_GIDS[year]}`;
 </script>
 
 <!-- Loading -->
@@ -472,6 +475,12 @@
 
 <!-- P&L Filter Bar -->
 <div class="filter-wrap" id="plFilterWrap">
+  <span class="filter-label">Year:</span>
+  <div class="filter-pills" id="plYearPills">
+    <button class="fp" onclick="selectPLYear(this,'2025')">2025</button>
+    <button class="fp active" onclick="selectPLYear(this,'2026')">2026</button>
+  </div>
+  <span class="filter-sep">·</span>
   <span class="filter-label">Period:</span>
   <div class="filter-pills" id="plFilterPills">
     <!-- pills injected dynamically after data loads -->
@@ -482,7 +491,7 @@
 <main class="main" id="pl-main">
 
   <!-- P&L KPIs -->
-  <p class="section-label" id="plSummaryLabel">P&L Summary — 2026</p>
+  <p class="section-label" id="plSummaryLabel">P&L Summary</p>
   <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Net Sales</div>
@@ -520,7 +529,7 @@
   <p class="section-label">Monthly Trends</p>
   <div class="grid-3">
     <div class="card">
-      <div class="card-hd"><span class="card-title">Revenue — Offline vs Online</span><span class="card-tag">by month</span></div>
+      <div class="card-hd"><span class="card-title" id="plRevChartTitle">Revenue — Offline vs Online</span><span class="card-tag">by month</span></div>
       <div class="cw tall"><canvas id="plChartRevenue"></canvas></div>
     </div>
     <div class="card">
@@ -1092,7 +1101,8 @@ function showOverlay(type, on, msg='') {
 /* ══════════════════════════════════════════════════
    TAB SWITCHING
 ══════════════════════════════════════════════════ */
-let plLoaded = false;
+let plLoadedYears = {};  // { '2025': data, '2026': data }
+let plYear   = '2026';
 let plFilter = 'all';  // 'all' or month index array
 
 function switchTab(tab) {
@@ -1102,7 +1112,7 @@ function switchTab(tab) {
   if (tab === 'pl') {
     document.querySelectorAll('.tab-btn')[1].classList.add('active');
     document.getElementById('tab-pl').classList.add('active');
-    if (!plLoaded) loadPLData();
+    if (!plLoadedYears[plYear]) loadPLData(); else renderPL();
   } else {
     document.querySelectorAll('.tab-btn')[0].classList.add('active');
     document.getElementById('tab-adspend').classList.add('active');
@@ -1118,18 +1128,35 @@ let plCharts = {};
 async function loadPLData() {
   showOverlay('loading', true);
   try {
-    const res = await fetch(PL_CSV_URL);
+    const url = plCsvUrl(plYear);
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
-    PL = parsePLSheet(rows);
-    plLoaded = true;
+    const parsed = parsePLSheet(rows);
+    plLoadedYears[plYear] = parsed;
+    PL = parsed;
+    plFilter = 'all';
     buildPLFilterPills();
     renderPL();
   } catch(e) {
     showOverlay('error', true, e.message);
   }
   showOverlay('loading', false);
+}
+
+function selectPLYear(btn, year) {
+  document.querySelectorAll('#plYearPills .fp').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  plYear = year;
+  plFilter = 'all';
+  if (plLoadedYears[year]) {
+    PL = plLoadedYears[year];
+    buildPLFilterPills();
+    renderPL();
+  } else {
+    loadPLData();
+  }
 }
 
 function plVal(str) {
@@ -1184,10 +1211,15 @@ function parsePLSheet(rows) {
     return found ? data[found] : months.map(() => 0);
   };
 
+  // Handle 2025 format (Total Sales only) vs 2026 (Offline + Online split)
+  const hasOffline = Object.keys(data).some(k => k.toLowerCase().includes('offline'));
+  const totalSales = get('Total Sales');
+
   const out = {
     months: months.map(m => m.label),
-    offlineSales:    get('Offline Sales'),
-    onlineSales:     get('Online Sales'),
+    offlineSales:    hasOffline ? get('Offline Sales') : totalSales,
+    onlineSales:     hasOffline ? get('Online Sales') : months.map(() => 0),
+    hasSalesSplit:   hasOffline,
     discounts:       get('Less: Discounts'),
     refunds:         get('Less: Refunds'),
     netSales:        get('Net Sales'),
@@ -1232,14 +1264,14 @@ function buildPLFilterPills() {
     'OCT': 4, 'NOV': 4, 'DEC': 4,
   };
 
-  let html = `<button class="fp active" onclick="selectPLPreset(this,'all')">All 2026</button>`;
+  let html = `<button class="fp active" onclick="selectPLPreset(this,'all')">All ${plYear}</button>`;
 
   // Quarter pills — only show quarters that have data
   const quarters = [...new Set(PL.months.map(m => Q_MAP[m]))].sort();
   for (const q of quarters) {
     const qMonths = PL.months.filter(m => Q_MAP[m] === q);
     if (qMonths.length) {
-      html += `<button class="fp q-pill" onclick="selectPLPreset(this,'q${q}')">Q${q} '26</button>`;
+      html += `<button class="fp q-pill" onclick="selectPLPreset(this,'q${q}')">Q${q} '${plYear.slice(2)}</button>`;
     }
   }
 
@@ -1278,11 +1310,11 @@ function selectPLPreset(btn, preset) {
   // Update badge
   const badge = document.getElementById('plPeriodBadge');
   if (plFilter === 'all') {
-    badge.textContent = 'All 2026';
+    badge.textContent = 'All ' + plYear;
     badge.classList.remove('filtered');
   } else {
     const names = plFilter.map(i => PL.months[i]);
-    badge.textContent = names.length === 1 ? names[0] + ' 2026' : names.join(', ');
+    badge.textContent = names.length === 1 ? names[0] + ' ' + plYear : names.join(', ');
     badge.classList.add('filtered');
   }
 
@@ -1336,7 +1368,7 @@ function renderPL() {
   setText('pl-k-contrib', fc(totalContrib));
   setText('pl-k-contrib-sub', avgContribPct.toFixed(1) + '% of net sales');
   setText('pl-k-adcost', fc(totalAdCost));
-  setText('plSummaryLabel', 'P&L Summary — ' + (plFilter === 'all' ? '2026 YTD' : m.join(', ') + ' 2026'));
+  setText('plSummaryLabel', 'P&L Summary — ' + (plFilter === 'all' ? plYear + (plYear === '2025' ? '' : ' YTD') : m.join(', ') + ' ' + plYear));
 
   const gmEl = document.getElementById('pl-k-grossmargin');
   gmEl.textContent = fc(totalGrossMargin);
@@ -1364,17 +1396,21 @@ function renderPLCharts(idx) {
   const m = filterArr(PL.months, idx);
   const f = (arr) => filterArr(arr, idx);
 
-  // Revenue — Offline vs Online stacked bar
-  plMk('plChartRevenue', 'bar', {
-    labels: m,
-    datasets: [
-      { label: 'Offline Sales', data: f(PL.offlineSales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
-      { label: 'Online Sales',  data: f(PL.onlineSales),  backgroundColor: PALETTE[2]+'cc', borderColor: PALETTE[2], borderWidth: 1 },
-    ]
-  }, {
+  setText('plRevChartTitle', PL.hasSalesSplit ? 'Revenue — Offline vs Online' : 'Total Sales');
+
+  // Revenue — stacked bar (split if available, otherwise total)
+  const revDatasets = PL.hasSalesSplit
+    ? [
+        { label: 'Offline Sales', data: f(PL.offlineSales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+        { label: 'Online Sales',  data: f(PL.onlineSales),  backgroundColor: PALETTE[2]+'cc', borderColor: PALETTE[2], borderWidth: 1 },
+      ]
+    : [
+        { label: 'Total Sales', data: f(PL.offlineSales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1.5, borderRadius: 6 },
+      ];
+  plMk('plChartRevenue', 'bar', { labels: m, datasets: revDatasets }, {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      legend: { display: PL.hasSalesSplit, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
       tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
     },
     scales: {
@@ -1505,10 +1541,18 @@ function renderPLTable(idx) {
   // Filtered data
   const fNS = fa(PL.netSales), fCM = fa(PL.contribMargin), fGM = fa(PL.grossMargin), fNI = fa(PL.netIncome);
 
-  // Rows
+  // Rows — conditionally include offline/online split or total sales
+  const salesRows = PL.hasSalesSplit
+    ? [
+        { label: 'Offline Sales',  data: fa(PL.offlineSales) },
+        { label: 'Online Sales',   data: fa(PL.onlineSales) },
+      ]
+    : [
+        { label: 'Total Sales',    data: fa(PL.offlineSales) },
+      ];
+
   const lines = [
-    { label: 'Offline Sales',           data: fa(PL.offlineSales) },
-    { label: 'Online Sales',            data: fa(PL.onlineSales) },
+    ...salesRows,
     { label: 'Less: Discounts',         data: fa(PL.discounts) },
     { label: 'Less: Refunds',           data: fa(PL.refunds) },
     { label: 'Net Sales',               data: fNS, bold: true },
