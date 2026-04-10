@@ -231,6 +231,19 @@
 
     hr.div { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
     .no-data { text-align:center; color: var(--muted); padding: 3rem; font-size:.85rem; }
+
+    /* ── Tab nav ────────────────────────────────────────── */
+    .tab-nav { display: flex; gap: .3rem; }
+    .tab-btn {
+      background: transparent; border: 1px solid transparent;
+      color: var(--muted); padding: .4rem .9rem; border-radius: var(--rs);
+      cursor: pointer; font-size: .78rem; font-weight: 600;
+      font-family: inherit; transition: all .15s;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface2); }
+    .tab-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
@@ -240,6 +253,11 @@
   const SPREADSHEET_ID = "1mjzGs7BwVLm4MmwH9dI9duYHW1zO4nMIpRcc_epnU9A";
   const GID            = "1198665066";   // "Ad Spend & Margin Dashboard" tab
   const CSV_URL        = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
+
+  // P&L Sheet
+  const PL_SPREADSHEET_ID = "1xks-eRawLAX-GfONfC4DctJQdQD9sRC2DOwOM5WrrXY";
+  const PL_GID            = "1547773303";   // "2026" tab
+  const PL_CSV_URL        = `https://docs.google.com/spreadsheets/d/${PL_SPREADSHEET_ID}/export?format=csv&gid=${PL_GID}`;
 </script>
 
 <!-- Loading -->
@@ -274,7 +292,11 @@
       src="https://cdn.shopify.com/s/files/1/0716/7980/3665/files/Wholesale_Caps_Logo.png?v=1742557531"
       alt="WCE Online Sales"
     />
-    <div class="brand-sub">Ad Spend &amp; Margin Dashboard</div>
+    <div class="brand-sub">Business Dashboard</div>
+  </div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('adspend')">Ad Spend &amp; Margin</button>
+    <button class="tab-btn" onclick="switchTab('pl')">Profit &amp; Loss</button>
   </div>
   <div class="topbar-right">
     <span class="period-badge" id="periodBadge">All Time</span>
@@ -287,6 +309,9 @@
     </button>
   </div>
 </header>
+
+<!-- ══════ AD SPEND TAB ══════ -->
+<div class="tab-content active" id="tab-adspend">
 
 <!-- ── Filter Bar ──────────────────────────────────────────── -->
 <div class="filter-wrap">
@@ -439,6 +464,98 @@
   </div>
 
 </main>
+
+</div><!-- end tab-adspend -->
+
+<!-- ══════ P&L TAB ══════ -->
+<div class="tab-content" id="tab-pl">
+
+<main class="main" id="pl-main">
+
+  <!-- P&L KPIs -->
+  <p class="section-label">P&L Summary — 2026</p>
+  <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="kpi" style="--kpi-c:var(--green)">
+      <div class="kpi-label">Net Sales</div>
+      <div class="kpi-val" id="pl-k-netsales">—</div>
+      <div class="kpi-sub" id="pl-k-netsales-sub">year to date</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--red)">
+      <div class="kpi-label">Total COGS</div>
+      <div class="kpi-val" id="pl-k-cogs">—</div>
+      <div class="kpi-sub">cost of production</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--purple)">
+      <div class="kpi-label">Contribution Margin</div>
+      <div class="kpi-val" id="pl-k-contrib">—</div>
+      <div class="kpi-sub" id="pl-k-contrib-sub">after COGS</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--amber)">
+      <div class="kpi-label">Total Ad Spend</div>
+      <div class="kpi-val" id="pl-k-adcost">—</div>
+      <div class="kpi-sub">marketing cost</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--blue)">
+      <div class="kpi-label">Gross Margin</div>
+      <div class="kpi-val" id="pl-k-grossmargin">—</div>
+      <div class="kpi-sub" id="pl-k-grossmargin-sub">after all variable costs</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--green)">
+      <div class="kpi-label">Net Operating Income</div>
+      <div class="kpi-val" id="pl-k-netincome">—</div>
+      <div class="kpi-sub" id="pl-k-netincome-sub">bottom line</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Revenue Breakdown + Margins + Net Income -->
+  <p class="section-label">Monthly Trends</p>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Revenue — Offline vs Online</span><span class="card-tag">by month</span></div>
+      <div class="cw tall"><canvas id="plChartRevenue"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Margin %</span><span class="card-tag">contribution &amp; gross</span></div>
+      <div class="cw tall"><canvas id="plChartMargins"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Net Operating Income</span><span class="card-tag">by month</span></div>
+      <div class="cw tall"><canvas id="plChartNetIncome"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 2: COGS + Variable Costs + OpEx -->
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Cost of Production</span><span class="card-tag">material + labor</span></div>
+      <div class="cw"><canvas id="plChartCogs"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Variable Costs</span><span class="card-tag">ads, merchant, shipping</span></div>
+      <div class="cw"><canvas id="plChartVarCosts"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Operating Expenses</span><span class="card-tag">by month</span></div>
+      <div class="cw"><canvas id="plChartOpex"></canvas></div>
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <!-- P&L Table -->
+  <p class="section-label">Profit &amp; Loss Statement</p>
+  <div class="table-card">
+    <div class="tbl-wrap">
+      <table id="plTable">
+        <thead><tr id="plTableHead"></tr></thead>
+        <tbody id="plTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+</div><!-- end tab-pl -->
 
 <script>
 /* ══════════════════════════════════════════════════
@@ -960,6 +1077,390 @@ function showOverlay(type, on, msg='') {
   if (type==='error') {
     document.getElementById('errorOverlay').classList.toggle('hidden',!on);
     if (on) { document.getElementById('errMsg').textContent=msg; document.getElementById('errUrl').textContent=CSV_URL; }
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════════════ */
+let plLoaded = false;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+  if (tab === 'pl') {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('tab-pl').classList.add('active');
+    if (!plLoaded) loadPLData();
+  } else {
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    document.getElementById('tab-adspend').classList.add('active');
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   P&L DATA LOADING & PARSING
+══════════════════════════════════════════════════ */
+let PL = {};
+let plCharts = {};
+
+async function loadPLData() {
+  showOverlay('loading', true);
+  try {
+    const res = await fetch(PL_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
+    PL = parsePLSheet(rows);
+    plLoaded = true;
+    renderPL();
+  } catch(e) {
+    showOverlay('error', true, e.message);
+  }
+  showOverlay('loading', false);
+}
+
+function plVal(str) {
+  if (!str) return 0;
+  str = String(str).trim();
+  if (!str || str === '-') return 0;
+  const neg = /^-|\(/.test(str);
+  const clean = str.replace(/[$,()%\s]/g, '').replace(/^-/, '');
+  const n = parseFloat(clean);
+  if (isNaN(n)) return 0;
+  return neg && n > 0 ? -n : n;
+}
+
+function parsePLSheet(rows) {
+  // Find the month header row (row with JAN, FEB, etc.)
+  let monthRow = -1;
+  const months = [];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    for (let j = 2; j < r.length; j++) {
+      const v = (r[j] || '').trim().toUpperCase();
+      if (['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].includes(v) && v.length === 3) {
+        if (monthRow === -1) monthRow = i;
+      }
+    }
+    if (monthRow === i) {
+      for (let j = 2; j < r.length; j++) {
+        const v = (r[j] || '').trim().toUpperCase();
+        if (v.length === 3 && ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].includes(v)) {
+          months.push({ label: v, col: j });
+        }
+      }
+      break;
+    }
+  }
+
+  // Build a lookup: row label → array of values per month
+  const data = {};
+  for (let i = monthRow + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const label = (r[0] || r[1] || '').trim();
+    if (!label) continue;
+    data[label] = months.map(m => plVal(r[m.col]));
+  }
+
+  // Extract key rows
+  const get = (key) => {
+    // Try exact match first, then partial match
+    if (data[key]) return data[key];
+    const lower = key.toLowerCase();
+    const found = Object.keys(data).find(k => k.toLowerCase().includes(lower));
+    return found ? data[found] : months.map(() => 0);
+  };
+
+  const out = {
+    months: months.map(m => m.label),
+    offlineSales:    get('Offline Sales'),
+    onlineSales:     get('Online Sales'),
+    discounts:       get('Less: Discounts'),
+    refunds:         get('Less: Refunds'),
+    netSales:        get('Net Sales'),
+    materialCogs:    get('Material COGS'),
+    prodSalaries:    get('Production Salaries'),
+    totalCogs:       get('Total Cost of Production'),
+    contribMargin:   get('Contribution Margin'),
+    contribMarginPct:get('% Contribution Margin'),
+    adCost:          get('Ad Cost'),
+    merchantFees:    get('Merchant Fees'),
+    shipping:        get('Shipping'),
+    otherVarCost:    get('Other Variable Cost'),
+    grossMargin:     get('Gross Margin'),
+    grossMarginPct:  get('% Gross Margin'),
+    payroll:         get('Payroll'),
+    insurance:       get('Insurance'),
+    rent:            get('Rent and Interest'),
+    travel:          get('Travel'),
+    utilities:       get('Utilities'),
+    otherOpex:       (data['Other'] || get('Other')),
+    totalExpense:    get('Total Expense'),
+    netIncome:       get('Net Operating Income'),
+    otherIncome:     get('Other Non-Ordinary'),
+    netMarginPct:    get('% margin'),
+  };
+
+  return out;
+}
+
+/* ══════════════════════════════════════════════════
+   P&L RENDERING
+══════════════════════════════════════════════════ */
+function renderPL() {
+  if (!PL.months || !PL.months.length) return;
+  const m = PL.months;
+  const sum = arr => arr.reduce((a, b) => a + b, 0);
+
+  // KPIs
+  const totalNetSales  = sum(PL.netSales);
+  const totalCogs      = sum(PL.totalCogs);
+  const totalContrib   = sum(PL.contribMargin);
+  const totalAdCost    = sum(PL.adCost);
+  const totalGrossMargin = sum(PL.grossMargin);
+  const totalNetIncome = sum(PL.netIncome);
+  const avgContribPct  = totalNetSales ? (totalContrib / totalNetSales * 100) : 0;
+  const avgGrossPct    = totalNetSales ? (totalGrossMargin / totalNetSales * 100) : 0;
+
+  setText('pl-k-netsales', fc(totalNetSales));
+  setText('pl-k-netsales-sub', m.length + ' months YTD');
+  setText('pl-k-cogs', fc(totalCogs));
+  setText('pl-k-contrib', fc(totalContrib));
+  setText('pl-k-contrib-sub', avgContribPct.toFixed(1) + '% of net sales');
+  setText('pl-k-adcost', fc(totalAdCost));
+
+  const gmEl = document.getElementById('pl-k-grossmargin');
+  gmEl.textContent = fc(totalGrossMargin);
+  gmEl.style.color = totalGrossMargin < 0 ? 'var(--red)' : 'var(--blue)';
+  setText('pl-k-grossmargin-sub', avgGrossPct.toFixed(1) + '% of net sales');
+
+  const niEl = document.getElementById('pl-k-netincome');
+  niEl.textContent = fc(totalNetIncome);
+  niEl.style.color = totalNetIncome < 0 ? 'var(--red)' : 'var(--green)';
+  setText('pl-k-netincome-sub', m.length + ' months YTD');
+
+  // Charts
+  renderPLCharts();
+  renderPLTable();
+}
+
+function plMk(id, type, data, opts) {
+  if (plCharts[id]) plCharts[id].destroy();
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  plCharts[id] = new Chart(ctx, { type, data, options: opts });
+}
+
+function renderPLCharts() {
+  const m = PL.months;
+
+  // Revenue — Offline vs Online stacked bar
+  plMk('plChartRevenue', 'bar', {
+    labels: m,
+    datasets: [
+      { label: 'Offline Sales', data: PL.offlineSales, backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Online Sales',  data: PL.onlineSales,  backgroundColor: PALETTE[2]+'cc', borderColor: PALETTE[2], borderWidth: 1 },
+    ]
+  }, {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, callback: v => shortCurrency(v) }, grid: { color: '#252d45' } }
+    }
+  });
+
+  // Margin % — contribution & gross
+  plMk('plChartMargins', 'line', {
+    labels: m,
+    datasets: [
+      {
+        label: 'Contribution Margin %',
+        data: PL.netSales.map((ns, i) => ns ? (PL.contribMargin[i] / ns * 100) : 0),
+        borderColor: PALETTE[1], backgroundColor: PALETTE[1] + '22',
+        borderWidth: 2.5, pointRadius: m.length === 1 ? 6 : 4, fill: false, tension: .3,
+      },
+      {
+        label: 'Gross Margin %',
+        data: PL.netSales.map((ns, i) => ns ? (PL.grossMargin[i] / ns * 100) : 0),
+        borderColor: PALETTE[2], backgroundColor: PALETTE[2] + '22',
+        borderWidth: 2.5, pointRadius: m.length === 1 ? 6 : 4, fill: false, tension: .3,
+        pointBackgroundColor: PL.grossMargin.map(v => v < 0 ? RED : GREEN),
+        pointBorderColor: PL.grossMargin.map(v => v < 0 ? RED : GREEN),
+      },
+    ]
+  }, {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%` } }
+    },
+    scales: {
+      x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { ticks: { color: '#64748b', font: { size: 10 }, callback: v => v + '%' }, grid: { color: '#252d45' } }
+    }
+  });
+
+  // Net Operating Income — bar
+  plMk('plChartNetIncome', 'bar', {
+    labels: m,
+    datasets: [{
+      data: PL.netIncome,
+      backgroundColor: PL.netIncome.map(v => v < 0 ? RED + 'bb' : GREEN + 'bb'),
+      borderColor: PL.netIncome.map(v => v < 0 ? RED : GREEN),
+      borderWidth: 1.5, borderRadius: 5,
+    }]
+  }, baseOpts(v => shortCurrency(v), c => ` ${fc(c.parsed.y)}`));
+
+  // COGS — stacked bar (material + labor)
+  plMk('plChartCogs', 'bar', {
+    labels: m,
+    datasets: [
+      { label: 'Material COGS',       data: PL.materialCogs,  backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Production Salaries', data: PL.prodSalaries,  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+    ]
+  }, {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, callback: v => shortCurrency(v) }, grid: { color: '#252d45' } }
+    }
+  });
+
+  // Variable Costs — stacked bar
+  plMk('plChartVarCosts', 'bar', {
+    labels: m,
+    datasets: [
+      { label: 'Ad Cost',       data: PL.adCost,       backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Merchant Fees', data: PL.merchantFees,  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+      { label: 'Shipping',      data: PL.shipping,      backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
+    ]
+  }, {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, callback: v => shortCurrency(v) }, grid: { color: '#252d45' } }
+    }
+  });
+
+  // OpEx — stacked bar
+  plMk('plChartOpex', 'bar', {
+    labels: m,
+    datasets: [
+      { label: 'Payroll',    data: PL.payroll,   backgroundColor: PALETTE[0] + 'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Insurance',  data: PL.insurance,  backgroundColor: PALETTE[1] + 'cc', borderColor: PALETTE[1], borderWidth: 1 },
+      { label: 'Rent',       data: PL.rent,       backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+      { label: 'Utilities',  data: PL.utilities,  backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
+      { label: 'Other',      data: PL.otherOpex,  backgroundColor: PALETTE[5] + 'cc', borderColor: PALETTE[5], borderWidth: 1 },
+    ]
+  }, {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 8, font: { size: 9 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fc(c.parsed.y)}` } }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: true, ticks: { color: '#64748b', font: { size: 10 }, callback: v => shortCurrency(v) }, grid: { color: '#252d45' } }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   P&L TABLE
+══════════════════════════════════════════════════ */
+function renderPLTable() {
+  const m = PL.months;
+  const sum = arr => arr.reduce((a, b) => a + b, 0);
+
+  // Header
+  document.getElementById('plTableHead').innerHTML =
+    `<th style="text-align:left">Line Item</th>` +
+    m.map(mo => `<th>${mo}</th>`).join('') +
+    `<th>YTD</th>`;
+
+  // Rows
+  const lines = [
+    { label: 'Offline Sales',           data: PL.offlineSales },
+    { label: 'Online Sales',            data: PL.onlineSales },
+    { label: 'Less: Discounts',         data: PL.discounts },
+    { label: 'Less: Refunds',           data: PL.refunds },
+    { label: 'Net Sales',               data: PL.netSales, bold: true },
+    { label: '', spacer: true },
+    { label: 'Material COGS',           data: PL.materialCogs },
+    { label: 'Production Salaries',     data: PL.prodSalaries },
+    { label: 'Total Cost of Production',data: PL.totalCogs, bold: true },
+    { label: '', spacer: true },
+    { label: 'Contribution Margin',     data: PL.contribMargin, bold: true, colorize: true },
+    { label: '% Contribution Margin',   data: PL.netSales.map((ns, i) => ns ? (PL.contribMargin[i] / ns * 100) : 0), pct: true },
+    { label: '', spacer: true },
+    { label: 'Ad Cost',                 data: PL.adCost },
+    { label: 'Merchant Fees',           data: PL.merchantFees },
+    { label: 'Shipping',                data: PL.shipping },
+    { label: 'Total Variable Cost',     data: PL.otherVarCost, bold: true },
+    { label: '', spacer: true },
+    { label: 'Gross Margin',            data: PL.grossMargin, bold: true, colorize: true },
+    { label: '% Gross Margin',          data: PL.netSales.map((ns, i) => ns ? (PL.grossMargin[i] / ns * 100) : 0), pct: true },
+    { label: '', spacer: true },
+    { label: 'Payroll & Payroll Taxes', data: PL.payroll },
+    { label: 'Insurance',               data: PL.insurance },
+    { label: 'Rent & Interest',         data: PL.rent },
+    { label: 'Travel',                  data: PL.travel },
+    { label: 'Utilities',               data: PL.utilities },
+    { label: 'Other',                   data: PL.otherOpex },
+    { label: 'Total Operating Expense', data: PL.totalExpense, bold: true },
+    { label: '', spacer: true },
+    { label: 'Net Operating Income',    data: PL.netIncome, bold: true, colorize: true },
+    { label: '% Net Margin',            data: PL.netSales.map((ns, i) => ns ? (PL.netIncome[i] / ns * 100) : 0), pct: true },
+  ];
+
+  const tbody = document.getElementById('plTableBody');
+  tbody.innerHTML = '';
+
+  for (const line of lines) {
+    const tr = document.createElement('tr');
+    if (line.spacer) {
+      tr.innerHTML = `<td colspan="${m.length + 2}" style="padding:.3rem;border:none"></td>`;
+      tbody.appendChild(tr);
+      continue;
+    }
+    if (line.bold) tr.className = 'total-row';
+
+    let html = `<td style="text-align:left${line.bold ? ';font-weight:700' : ''}">${line.label}</td>`;
+    const ytd = line.pct
+      ? (sum(PL.netSales) ? (line.label.includes('Net Margin')
+          ? sum(PL.netIncome) / sum(PL.netSales) * 100
+          : line.label.includes('Gross')
+            ? sum(PL.grossMargin) / sum(PL.netSales) * 100
+            : sum(PL.contribMargin) / sum(PL.netSales) * 100) : 0)
+      : sum(line.data);
+
+    for (let i = 0; i < m.length; i++) {
+      const v = line.data[i];
+      const cls = line.colorize ? (v < 0 ? 'neg' : 'pos') : '';
+      const formatted = line.pct ? v.toFixed(1) + '%' : fc(v);
+      html += `<td class="${cls}">${formatted}</td>`;
+    }
+
+    const ytdCls = line.colorize ? (ytd < 0 ? 'neg' : 'pos') : '';
+    const ytdFormatted = line.pct ? ytd.toFixed(1) + '%' : fc(ytd);
+    html += `<td class="${ytdCls}" style="font-weight:700">${ytdFormatted}</td>`;
+
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
   }
 }
 </script>
