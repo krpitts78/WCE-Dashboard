@@ -470,10 +470,19 @@
 <!-- ══════ P&L TAB ══════ -->
 <div class="tab-content" id="tab-pl">
 
+<!-- P&L Filter Bar -->
+<div class="filter-wrap" id="plFilterWrap">
+  <span class="filter-label">Period:</span>
+  <div class="filter-pills" id="plFilterPills">
+    <!-- pills injected dynamically after data loads -->
+  </div>
+  <span class="period-badge" id="plPeriodBadge">All 2026</span>
+</div>
+
 <main class="main" id="pl-main">
 
   <!-- P&L KPIs -->
-  <p class="section-label">P&L Summary — 2026</p>
+  <p class="section-label" id="plSummaryLabel">P&L Summary — 2026</p>
   <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Net Sales</div>
@@ -1084,6 +1093,7 @@ function showOverlay(type, on, msg='') {
    TAB SWITCHING
 ══════════════════════════════════════════════════ */
 let plLoaded = false;
+let plFilter = 'all';  // 'all' or month index array
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1114,6 +1124,7 @@ async function loadPLData() {
     const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
     PL = parsePLSheet(rows);
     plLoaded = true;
+    buildPLFilterPills();
     renderPL();
   } catch(e) {
     showOverlay('error', true, e.message);
@@ -1207,29 +1218,125 @@ function parsePLSheet(rows) {
 }
 
 /* ══════════════════════════════════════════════════
+   P&L FILTER
+══════════════════════════════════════════════════ */
+function buildPLFilterPills() {
+  const pills = document.getElementById('plFilterPills');
+  if (!PL.months || !PL.months.length) return;
+
+  // Quarter groupings for 2026
+  const Q_MAP = {
+    'JAN': 1, 'FEB': 1, 'MAR': 1,
+    'APR': 2, 'MAY': 2, 'JUN': 2,
+    'JUL': 3, 'AUG': 3, 'SEP': 3,
+    'OCT': 4, 'NOV': 4, 'DEC': 4,
+  };
+
+  let html = `<button class="fp active" onclick="selectPLPreset(this,'all')">All 2026</button>`;
+
+  // Quarter pills — only show quarters that have data
+  const quarters = [...new Set(PL.months.map(m => Q_MAP[m]))].sort();
+  for (const q of quarters) {
+    const qMonths = PL.months.filter(m => Q_MAP[m] === q);
+    if (qMonths.length) {
+      html += `<button class="fp q-pill" onclick="selectPLPreset(this,'q${q}')">Q${q} '26</button>`;
+    }
+  }
+
+  html += `<span class="filter-sep">·</span>`;
+
+  // Individual month pills
+  for (const m of PL.months) {
+    html += `<button class="fp" onclick="selectPLPreset(this,'${m}')">${m}</button>`;
+  }
+
+  pills.innerHTML = html;
+}
+
+function selectPLPreset(btn, preset) {
+  document.querySelectorAll('#plFilterPills .fp').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const Q_MAP = {
+    'JAN': 1, 'FEB': 1, 'MAR': 1,
+    'APR': 2, 'MAY': 2, 'JUN': 2,
+    'JUL': 3, 'AUG': 3, 'SEP': 3,
+    'OCT': 4, 'NOV': 4, 'DEC': 4,
+  };
+
+  if (preset === 'all') {
+    plFilter = 'all';
+  } else if (preset.startsWith('q')) {
+    const q = parseInt(preset.slice(1));
+    plFilter = PL.months.map((m, i) => Q_MAP[m] === q ? i : -1).filter(i => i >= 0);
+  } else {
+    // Single month
+    const idx = PL.months.indexOf(preset);
+    plFilter = idx >= 0 ? [idx] : 'all';
+  }
+
+  // Update badge
+  const badge = document.getElementById('plPeriodBadge');
+  if (plFilter === 'all') {
+    badge.textContent = 'All 2026';
+    badge.classList.remove('filtered');
+  } else {
+    const names = plFilter.map(i => PL.months[i]);
+    badge.textContent = names.length === 1 ? names[0] + ' 2026' : names.join(', ');
+    badge.classList.add('filtered');
+  }
+
+  renderPL();
+}
+
+// Returns filtered arrays — indices only for selected months
+function getFilteredPL() {
+  if (plFilter === 'all') {
+    const indices = PL.months.map((_, i) => i);
+    return indices;
+  }
+  return plFilter;
+}
+
+function filterArr(arr, indices) {
+  return indices.map(i => arr[i]);
+}
+
+/* ══════════════════════════════════════════════════
    P&L RENDERING
 ══════════════════════════════════════════════════ */
 function renderPL() {
   if (!PL.months || !PL.months.length) return;
-  const m = PL.months;
+  const idx = getFilteredPL();
+  const m   = filterArr(PL.months, idx);
   const sum = arr => arr.reduce((a, b) => a + b, 0);
 
-  // KPIs
-  const totalNetSales  = sum(PL.netSales);
-  const totalCogs      = sum(PL.totalCogs);
-  const totalContrib   = sum(PL.contribMargin);
-  const totalAdCost    = sum(PL.adCost);
-  const totalGrossMargin = sum(PL.grossMargin);
-  const totalNetIncome = sum(PL.netIncome);
-  const avgContribPct  = totalNetSales ? (totalContrib / totalNetSales * 100) : 0;
-  const avgGrossPct    = totalNetSales ? (totalGrossMargin / totalNetSales * 100) : 0;
+  // Filtered arrays
+  const fNetSales     = filterArr(PL.netSales, idx);
+  const fTotalCogs    = filterArr(PL.totalCogs, idx);
+  const fContrib      = filterArr(PL.contribMargin, idx);
+  const fAdCost       = filterArr(PL.adCost, idx);
+  const fGrossMargin  = filterArr(PL.grossMargin, idx);
+  const fNetIncome    = filterArr(PL.netIncome, idx);
 
+  // KPIs
+  const totalNetSales    = sum(fNetSales);
+  const totalCogs        = sum(fTotalCogs);
+  const totalContrib     = sum(fContrib);
+  const totalAdCost      = sum(fAdCost);
+  const totalGrossMargin = sum(fGrossMargin);
+  const totalNetIncome   = sum(fNetIncome);
+  const avgContribPct    = totalNetSales ? (totalContrib / totalNetSales * 100) : 0;
+  const avgGrossPct      = totalNetSales ? (totalGrossMargin / totalNetSales * 100) : 0;
+
+  const periodDesc = m.length === PL.months.length ? 'year to date' : m.join(', ');
   setText('pl-k-netsales', fc(totalNetSales));
-  setText('pl-k-netsales-sub', m.length + ' months YTD');
+  setText('pl-k-netsales-sub', m.length + (m.length === 1 ? ' month' : ' months') + (plFilter === 'all' ? ' YTD' : ''));
   setText('pl-k-cogs', fc(totalCogs));
   setText('pl-k-contrib', fc(totalContrib));
   setText('pl-k-contrib-sub', avgContribPct.toFixed(1) + '% of net sales');
   setText('pl-k-adcost', fc(totalAdCost));
+  setText('plSummaryLabel', 'P&L Summary — ' + (plFilter === 'all' ? '2026 YTD' : m.join(', ') + ' 2026'));
 
   const gmEl = document.getElementById('pl-k-grossmargin');
   gmEl.textContent = fc(totalGrossMargin);
@@ -1239,11 +1346,11 @@ function renderPL() {
   const niEl = document.getElementById('pl-k-netincome');
   niEl.textContent = fc(totalNetIncome);
   niEl.style.color = totalNetIncome < 0 ? 'var(--red)' : 'var(--green)';
-  setText('pl-k-netincome-sub', m.length + ' months YTD');
+  setText('pl-k-netincome-sub', m.length + (m.length === 1 ? ' month' : ' months'));
 
-  // Charts
-  renderPLCharts();
-  renderPLTable();
+  // Charts & table use filtered indices
+  renderPLCharts(idx);
+  renderPLTable(idx);
 }
 
 function plMk(id, type, data, opts) {
@@ -1253,15 +1360,16 @@ function plMk(id, type, data, opts) {
   plCharts[id] = new Chart(ctx, { type, data, options: opts });
 }
 
-function renderPLCharts() {
-  const m = PL.months;
+function renderPLCharts(idx) {
+  const m = filterArr(PL.months, idx);
+  const f = (arr) => filterArr(arr, idx);
 
   // Revenue — Offline vs Online stacked bar
   plMk('plChartRevenue', 'bar', {
     labels: m,
     datasets: [
-      { label: 'Offline Sales', data: PL.offlineSales, backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
-      { label: 'Online Sales',  data: PL.onlineSales,  backgroundColor: PALETTE[2]+'cc', borderColor: PALETTE[2], borderWidth: 1 },
+      { label: 'Offline Sales', data: f(PL.offlineSales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Online Sales',  data: f(PL.onlineSales),  backgroundColor: PALETTE[2]+'cc', borderColor: PALETTE[2], borderWidth: 1 },
     ]
   }, {
     responsive: true, maintainAspectRatio: false,
@@ -1281,17 +1389,17 @@ function renderPLCharts() {
     datasets: [
       {
         label: 'Contribution Margin %',
-        data: PL.netSales.map((ns, i) => ns ? (PL.contribMargin[i] / ns * 100) : 0),
+        data: f(PL.netSales).map((ns, i) => ns ? (f(PL.contribMargin)[i] / ns * 100) : 0),
         borderColor: PALETTE[1], backgroundColor: PALETTE[1] + '22',
         borderWidth: 2.5, pointRadius: m.length === 1 ? 6 : 4, fill: false, tension: .3,
       },
       {
         label: 'Gross Margin %',
-        data: PL.netSales.map((ns, i) => ns ? (PL.grossMargin[i] / ns * 100) : 0),
+        data: f(PL.netSales).map((ns, i) => ns ? (f(PL.grossMargin)[i] / ns * 100) : 0),
         borderColor: PALETTE[2], backgroundColor: PALETTE[2] + '22',
         borderWidth: 2.5, pointRadius: m.length === 1 ? 6 : 4, fill: false, tension: .3,
-        pointBackgroundColor: PL.grossMargin.map(v => v < 0 ? RED : GREEN),
-        pointBorderColor: PL.grossMargin.map(v => v < 0 ? RED : GREEN),
+        pointBackgroundColor: f(PL.grossMargin).map(v => v < 0 ? RED : GREEN),
+        pointBorderColor: f(PL.grossMargin).map(v => v < 0 ? RED : GREEN),
       },
     ]
   }, {
@@ -1310,9 +1418,9 @@ function renderPLCharts() {
   plMk('plChartNetIncome', 'bar', {
     labels: m,
     datasets: [{
-      data: PL.netIncome,
-      backgroundColor: PL.netIncome.map(v => v < 0 ? RED + 'bb' : GREEN + 'bb'),
-      borderColor: PL.netIncome.map(v => v < 0 ? RED : GREEN),
+      data: f(PL.netIncome),
+      backgroundColor: f(PL.netIncome).map(v => v < 0 ? RED + 'bb' : GREEN + 'bb'),
+      borderColor: f(PL.netIncome).map(v => v < 0 ? RED : GREEN),
       borderWidth: 1.5, borderRadius: 5,
     }]
   }, baseOpts(v => shortCurrency(v), c => ` ${fc(c.parsed.y)}`));
@@ -1321,8 +1429,8 @@ function renderPLCharts() {
   plMk('plChartCogs', 'bar', {
     labels: m,
     datasets: [
-      { label: 'Material COGS',       data: PL.materialCogs,  backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
-      { label: 'Production Salaries', data: PL.prodSalaries,  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+      { label: 'Material COGS',       data: f(PL.materialCogs),  backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Production Salaries', data: f(PL.prodSalaries),  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
     ]
   }, {
     responsive: true, maintainAspectRatio: false,
@@ -1340,9 +1448,9 @@ function renderPLCharts() {
   plMk('plChartVarCosts', 'bar', {
     labels: m,
     datasets: [
-      { label: 'Ad Cost',       data: PL.adCost,       backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
-      { label: 'Merchant Fees', data: PL.merchantFees,  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
-      { label: 'Shipping',      data: PL.shipping,      backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
+      { label: 'Ad Cost',       data: f(PL.adCost),       backgroundColor: PALETTE[4] + 'cc', borderColor: PALETTE[4], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Merchant Fees', data: f(PL.merchantFees),  backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+      { label: 'Shipping',      data: f(PL.shipping),      backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
     ]
   }, {
     responsive: true, maintainAspectRatio: false,
@@ -1360,11 +1468,11 @@ function renderPLCharts() {
   plMk('plChartOpex', 'bar', {
     labels: m,
     datasets: [
-      { label: 'Payroll',    data: PL.payroll,   backgroundColor: PALETTE[0] + 'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
-      { label: 'Insurance',  data: PL.insurance,  backgroundColor: PALETTE[1] + 'cc', borderColor: PALETTE[1], borderWidth: 1 },
-      { label: 'Rent',       data: PL.rent,       backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
-      { label: 'Utilities',  data: PL.utilities,  backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
-      { label: 'Other',      data: PL.otherOpex,  backgroundColor: PALETTE[5] + 'cc', borderColor: PALETTE[5], borderWidth: 1 },
+      { label: 'Payroll',    data: f(PL.payroll),   backgroundColor: PALETTE[0] + 'cc', borderColor: PALETTE[0], borderWidth: 1, borderRadius: { topLeft: 4, topRight: 4 } },
+      { label: 'Insurance',  data: f(PL.insurance),  backgroundColor: PALETTE[1] + 'cc', borderColor: PALETTE[1], borderWidth: 1 },
+      { label: 'Rent',       data: f(PL.rent),       backgroundColor: PALETTE[3] + 'cc', borderColor: PALETTE[3], borderWidth: 1 },
+      { label: 'Utilities',  data: f(PL.utilities),  backgroundColor: PALETTE[6] + 'cc', borderColor: PALETTE[6], borderWidth: 1 },
+      { label: 'Other',      data: f(PL.otherOpex),  backgroundColor: PALETTE[5] + 'cc', borderColor: PALETTE[5], borderWidth: 1 },
     ]
   }, {
     responsive: true, maintainAspectRatio: false,
@@ -1382,49 +1490,54 @@ function renderPLCharts() {
 /* ══════════════════════════════════════════════════
    P&L TABLE
 ══════════════════════════════════════════════════ */
-function renderPLTable() {
-  const m = PL.months;
+function renderPLTable(idx) {
+  const m   = filterArr(PL.months, idx);
+  const fa  = (arr) => filterArr(arr, idx);
   const sum = arr => arr.reduce((a, b) => a + b, 0);
 
   // Header
+  const totalLabel = m.length === PL.months.length ? 'YTD' : 'Total';
   document.getElementById('plTableHead').innerHTML =
     `<th style="text-align:left">Line Item</th>` +
     m.map(mo => `<th>${mo}</th>`).join('') +
-    `<th>YTD</th>`;
+    `<th>${totalLabel}</th>`;
+
+  // Filtered data
+  const fNS = fa(PL.netSales), fCM = fa(PL.contribMargin), fGM = fa(PL.grossMargin), fNI = fa(PL.netIncome);
 
   // Rows
   const lines = [
-    { label: 'Offline Sales',           data: PL.offlineSales },
-    { label: 'Online Sales',            data: PL.onlineSales },
-    { label: 'Less: Discounts',         data: PL.discounts },
-    { label: 'Less: Refunds',           data: PL.refunds },
-    { label: 'Net Sales',               data: PL.netSales, bold: true },
+    { label: 'Offline Sales',           data: fa(PL.offlineSales) },
+    { label: 'Online Sales',            data: fa(PL.onlineSales) },
+    { label: 'Less: Discounts',         data: fa(PL.discounts) },
+    { label: 'Less: Refunds',           data: fa(PL.refunds) },
+    { label: 'Net Sales',               data: fNS, bold: true },
     { label: '', spacer: true },
-    { label: 'Material COGS',           data: PL.materialCogs },
-    { label: 'Production Salaries',     data: PL.prodSalaries },
-    { label: 'Total Cost of Production',data: PL.totalCogs, bold: true },
+    { label: 'Material COGS',           data: fa(PL.materialCogs) },
+    { label: 'Production Salaries',     data: fa(PL.prodSalaries) },
+    { label: 'Total Cost of Production',data: fa(PL.totalCogs), bold: true },
     { label: '', spacer: true },
-    { label: 'Contribution Margin',     data: PL.contribMargin, bold: true, colorize: true },
-    { label: '% Contribution Margin',   data: PL.netSales.map((ns, i) => ns ? (PL.contribMargin[i] / ns * 100) : 0), pct: true },
+    { label: 'Contribution Margin',     data: fCM, bold: true, colorize: true },
+    { label: '% Contribution Margin',   data: fNS.map((ns, i) => ns ? (fCM[i] / ns * 100) : 0), pct: true },
     { label: '', spacer: true },
-    { label: 'Ad Cost',                 data: PL.adCost },
-    { label: 'Merchant Fees',           data: PL.merchantFees },
-    { label: 'Shipping',                data: PL.shipping },
-    { label: 'Total Variable Cost',     data: PL.otherVarCost, bold: true },
+    { label: 'Ad Cost',                 data: fa(PL.adCost) },
+    { label: 'Merchant Fees',           data: fa(PL.merchantFees) },
+    { label: 'Shipping',                data: fa(PL.shipping) },
+    { label: 'Total Variable Cost',     data: fa(PL.otherVarCost), bold: true },
     { label: '', spacer: true },
-    { label: 'Gross Margin',            data: PL.grossMargin, bold: true, colorize: true },
-    { label: '% Gross Margin',          data: PL.netSales.map((ns, i) => ns ? (PL.grossMargin[i] / ns * 100) : 0), pct: true },
+    { label: 'Gross Margin',            data: fGM, bold: true, colorize: true },
+    { label: '% Gross Margin',          data: fNS.map((ns, i) => ns ? (fGM[i] / ns * 100) : 0), pct: true },
     { label: '', spacer: true },
-    { label: 'Payroll & Payroll Taxes', data: PL.payroll },
-    { label: 'Insurance',               data: PL.insurance },
-    { label: 'Rent & Interest',         data: PL.rent },
-    { label: 'Travel',                  data: PL.travel },
-    { label: 'Utilities',               data: PL.utilities },
-    { label: 'Other',                   data: PL.otherOpex },
-    { label: 'Total Operating Expense', data: PL.totalExpense, bold: true },
+    { label: 'Payroll & Payroll Taxes', data: fa(PL.payroll) },
+    { label: 'Insurance',               data: fa(PL.insurance) },
+    { label: 'Rent & Interest',         data: fa(PL.rent) },
+    { label: 'Travel',                  data: fa(PL.travel) },
+    { label: 'Utilities',               data: fa(PL.utilities) },
+    { label: 'Other',                   data: fa(PL.otherOpex) },
+    { label: 'Total Operating Expense', data: fa(PL.totalExpense), bold: true },
     { label: '', spacer: true },
-    { label: 'Net Operating Income',    data: PL.netIncome, bold: true, colorize: true },
-    { label: '% Net Margin',            data: PL.netSales.map((ns, i) => ns ? (PL.netIncome[i] / ns * 100) : 0), pct: true },
+    { label: 'Net Operating Income',    data: fNI, bold: true, colorize: true },
+    { label: '% Net Margin',            data: fNS.map((ns, i) => ns ? (fNI[i] / ns * 100) : 0), pct: true },
   ];
 
   const tbody = document.getElementById('plTableBody');
@@ -1441,11 +1554,11 @@ function renderPLTable() {
 
     let html = `<td style="text-align:left${line.bold ? ';font-weight:700' : ''}">${line.label}</td>`;
     const ytd = line.pct
-      ? (sum(PL.netSales) ? (line.label.includes('Net Margin')
-          ? sum(PL.netIncome) / sum(PL.netSales) * 100
+      ? (sum(fNS) ? (line.label.includes('Net Margin')
+          ? sum(fNI) / sum(fNS) * 100
           : line.label.includes('Gross')
-            ? sum(PL.grossMargin) / sum(PL.netSales) * 100
-            : sum(PL.contribMargin) / sum(PL.netSales) * 100) : 0)
+            ? sum(fGM) / sum(fNS) * 100
+            : sum(fCM) / sum(fNS) * 100) : 0)
       : sum(line.data);
 
     for (let i = 0; i < m.length; i++) {
