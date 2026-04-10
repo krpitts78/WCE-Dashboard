@@ -486,6 +486,13 @@
     <!-- pills injected dynamically after data loads -->
   </div>
   <span class="period-badge" id="plPeriodBadge">All 2026</span>
+
+  <!-- Custom range (hidden until "Custom" clicked) -->
+  <div class="custom-range hidden" id="plCustomRange">
+    <label>From <select id="plFromMonth" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .55rem;border-radius:var(--rs);font-size:.78rem;cursor:pointer;outline:none;"></select></label>
+    <label>To <select id="plToMonth" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .55rem;border-radius:var(--rs);font-size:.78rem;cursor:pointer;outline:none;"></select></label>
+    <button class="apply-btn" onclick="applyPLCustomRange()">Apply</button>
+  </div>
 </div>
 
 <main class="main" id="pl-main">
@@ -1282,7 +1289,20 @@ function buildPLFilterPills() {
     html += `<button class="fp" onclick="selectPLPreset(this,'${m}')">${m}</button>`;
   }
 
+  html += `<span class="filter-sep">·</span>`;
+  html += `<button class="fp" onclick="selectPLPreset(this,'custom')">Custom\u00a0▾</button>`;
+
   pills.innerHTML = html;
+
+  // Build custom range selectors
+  const fromSel = document.getElementById('plFromMonth');
+  const toSel   = document.getElementById('plToMonth');
+  const opts = PL.months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+  fromSel.innerHTML = opts;
+  toSel.innerHTML   = opts;
+  fromSel.value = 0;
+  toSel.value   = PL.months.length - 1;
+  document.getElementById('plCustomRange').classList.add('hidden');
 }
 
 function selectPLPreset(btn, preset) {
@@ -1296,6 +1316,14 @@ function selectPLPreset(btn, preset) {
     'OCT': 4, 'NOV': 4, 'DEC': 4,
   };
 
+  const customRow = document.getElementById('plCustomRange');
+
+  if (preset === 'custom') {
+    customRow.classList.remove('hidden');
+    return; // wait for Apply
+  }
+  customRow.classList.add('hidden');
+
   if (preset === 'all') {
     plFilter = 'all';
   } else if (preset.startsWith('q')) {
@@ -1307,18 +1335,43 @@ function selectPLPreset(btn, preset) {
     plFilter = idx >= 0 ? [idx] : 'all';
   }
 
-  // Update badge
+  updatePLBadge();
+  renderPL();
+}
+
+function applyPLCustomRange() {
+  const from = parseInt(document.getElementById('plFromMonth').value);
+  const to   = parseInt(document.getElementById('plToMonth').value);
+  if (from > to) {
+    alert('From month must be before or equal to To month.');
+    return;
+  }
+  plFilter = [];
+  for (let i = from; i <= to; i++) plFilter.push(i);
+
+  // Highlight custom button as active
+  document.querySelectorAll('#plFilterPills .fp').forEach(b => b.classList.remove('active'));
+  const pills = document.querySelectorAll('#plFilterPills .fp');
+  pills[pills.length - 1].classList.add('active'); // Custom is last pill
+
+  updatePLBadge();
+  renderPL();
+}
+
+function updatePLBadge() {
   const badge = document.getElementById('plPeriodBadge');
   if (plFilter === 'all') {
     badge.textContent = 'All ' + plYear;
     badge.classList.remove('filtered');
   } else {
     const names = plFilter.map(i => PL.months[i]);
-    badge.textContent = names.length === 1 ? names[0] + ' ' + plYear : names.join(', ');
+    if (names.length <= 3) {
+      badge.textContent = names.join(', ') + ' ' + plYear;
+    } else {
+      badge.textContent = names[0] + ' – ' + names[names.length - 1] + ' ' + plYear;
+    }
     badge.classList.add('filtered');
   }
-
-  renderPL();
 }
 
 // Returns filtered arrays — indices only for selected months
