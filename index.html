@@ -435,7 +435,7 @@
       <div class="cw"><canvas id="chartNewRet"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-hd"><span class="card-title">Revenue by Source</span><span class="card-tag">current month</span></div>
+      <div class="card-hd"><span class="card-title">Revenue by Source</span><span class="card-tag" id="tagRevSource">all time</span></div>
       <div class="cw"><canvas id="chartConvSource"></canvas></div>
     </div>
     <div class="card">
@@ -703,15 +703,18 @@ function parseSheet(rows) {
     out.newRet.push({ month: mn, newCust: newC, returning: retC, total: newC + retC });
   }
 
-  // Revenue by Source for the current (last) month — used in doughnut chart
+  // Revenue by Source — store per-month data so it can be filtered
   const sourceLabels = ['Email','Google SEO (Organic)','Direct','SH | Hats Revenue','Pmax | Hats Revenue','Pmax | T-Shirts Revenue'];
-  const lastCol = monthCols[MONTHS_ORDER[MONTHS_ORDER.length - 1]];
-  if (lastCol !== undefined) {
-    for (const src of sourceLabels) {
-      const row = metrics[src] || metrics[' ' + src];
-      if (!row) continue;
-      const val = pv((row[lastCol]||'').toString());
-      if (val && val > 0) out.convSource.push({ source: src.replace(/ Revenue$/,''), count: val });
+  out.revBySource = {}; // { cleanName: { month: value, … } }
+  for (const src of sourceLabels) {
+    const row = metrics[src] || metrics[' ' + src];
+    if (!row) continue;
+    const clean = src.replace(/ Revenue$/, '').trim();
+    out.revBySource[clean] = {};
+    for (const mn of MONTHS_ORDER) {
+      const col = monthCols[mn];
+      if (col === undefined) continue;
+      out.revBySource[clean][mn] = pv((row[col]||'').toString()) || 0;
     }
   }
 
@@ -832,6 +835,8 @@ function renderAll(from, to) {
   if (tagEl) tagEl.textContent = label;
   const nrTag = document.getElementById('tagNewRet');
   if (nrTag) nrTag.textContent = months.length > 1 ? label : months[0]?.month || label;
+  const rsTag = document.getElementById('tagRevSource');
+  if (rsTag) rsTag.textContent = label;
 
   renderKPIs(months);
   renderCharts(months, getFilteredNewRet(months));
@@ -1006,24 +1011,34 @@ function renderCharts(months, newRet) {
     });
   }
 
-  // Revenue by Source (always current month — not filtered)
-  if (D.convSource?.length) {
-    mk('chartConvSource', 'doughnut', {
-      labels: D.convSource.map(c=>c.source),
-      datasets:[{
-        data:  D.convSource.map(c=>c.count),
-        backgroundColor: PALETTE.slice(0,D.convSource.length).map(c=>c+'cc'),
-        borderColor:     PALETTE.slice(0,D.convSource.length),
-        borderWidth:1.5, hoverOffset:8,
-      }]
-    }, {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{ position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
-        tooltip:{ callbacks:{ label: c=>` ${c.label}: ${fc(c.parsed)}` } }
-      },
-      cutout:'58%'
-    });
+  // Revenue by Source — filtered to selected time period
+  if (D.revBySource) {
+    const monthNames = months.map(m => m.month);
+    const srcEntries = Object.entries(D.revBySource)
+      .map(([source, byMonth]) => ({
+        source,
+        total: monthNames.reduce((s, mn) => s + (byMonth[mn] || 0), 0)
+      }))
+      .filter(e => e.total > 0);
+
+    if (srcEntries.length) {
+      mk('chartConvSource', 'doughnut', {
+        labels: srcEntries.map(e => e.source),
+        datasets:[{
+          data:  srcEntries.map(e => e.total),
+          backgroundColor: PALETTE.slice(0, srcEntries.length).map(c => c+'cc'),
+          borderColor:     PALETTE.slice(0, srcEntries.length),
+          borderWidth:1.5, hoverOffset:8,
+        }]
+      }, {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
+          tooltip:{ callbacks:{ label: c=>` ${c.label}: ${fc(c.parsed)}` } }
+        },
+        cutout:'58%'
+      });
+    }
   }
 
   // AOV
