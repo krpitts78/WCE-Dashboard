@@ -251,7 +251,7 @@
 <script>
   // ── CONFIG ──────────────────────────────────────────────────
   const SPREADSHEET_ID = "1mjzGs7BwVLm4MmwH9dI9duYHW1zO4nMIpRcc_epnU9A";
-  const GID            = "1198665066";   // "Ad Spend & Margin Dashboard" tab
+  const GID            = "149803912";    // updated data tab
   const CSV_URL        = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
 
   // P&L Sheets
@@ -435,7 +435,7 @@
       <div class="cw"><canvas id="chartNewRet"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-hd"><span class="card-title">Conversions by Source</span><span class="card-tag">current month</span></div>
+      <div class="card-hd"><span class="card-title">Revenue by Source</span><span class="card-tag">current month</span></div>
       <div class="cw"><canvas id="chartConvSource"></canvas></div>
     </div>
     <div class="card">
@@ -639,50 +639,82 @@ async function loadData() {
 
 function parseSheet(rows) {
   const out = { kpi:{}, monthly:[], totals:{}, convSource:[], newRet:[] };
-  let inMonthly=false, inConv=false, inNewRet=false;
 
-  for (let i=0; i<rows.length; i++) {
-    const r  = rows[i];
-    const c1 = (r[1]||'').trim();
-    const c2 = (r[2]||'').trim();
+  // Sheet is transposed: months are column headers, metrics are rows.
+  // Find the header row containing month names (e.g. "July 2025", "Aug 2025", …)
+  const monthHeaderMap = {
+    'July 2025':'July','Aug 2025':'Aug','Sep 2025':'Sep',
+    'Oct 2025':'Oct','Nov 2025':'Nov','Dec 2025':'Dec',
+    'Jan 2026':'Jan','Feb 2026':'Feb','Mar 2026':'Mar',
+    'Apr 2026':'Apr'
+  };
+  const monthCols = {}; // MONTHS_ORDER name → column index
 
-    // KPI summary
-    if (c1 === 'TOTAL REVENUE') {
-      const v = rows[i+1]||[];
-      out.kpi = { revenue:v[1], orders:v[2], aov:v[3], profit:v[4], margin:v[5], roas:v[6], mktSpend:v[7], mktPct:v[8] };
-    }
-
-    // Monthly table header
-    if (c1==='Month' && c2==='Orders') { inMonthly=true; inConv=false; inNewRet=false; continue; }
-
-    if (inMonthly) {
-      if (MONTHS_ORDER.includes(c1)) {
-        out.monthly.push({
-          month:c1, orders:r[2], revenue:r[3], aov:r[4],
-          cogs:r[5], googleAds:r[6], metaAds:r[7],
-          mktPerOrder:r[8], roas:r[9], mktPctRev:r[10],
-          costPerOrder:r[11], marginPerOrder:r[12],
-          grossMarginPct:r[13], grossProfit:r[14], dailyMktCost:r[15]
-        });
-      }
-      if (/^Total|^Avg/i.test(c1)) {
-        out.totals = { orders:r[2], revenue:r[3], aov:r[4], cogs:r[5], googleAds:r[6], metaAds:r[7], mktPerOrder:r[8], roas:r[9], mktPctRev:r[10], costPerOrder:r[11], marginPerOrder:r[12], grossMarginPct:r[13], grossProfit:r[14] };
-        inMonthly=false;
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = 0; j < (rows[i]||[]).length; j++) {
+      const cell = (rows[i][j]||'').trim();
+      if (cell === 'July 2025') {
+        for (let k = j; k < rows[i].length; k++) {
+          const cn = (rows[i][k]||'').trim();
+          if (monthHeaderMap[cn]) monthCols[monthHeaderMap[cn]] = k;
+        }
+        break;
       }
     }
+    if (Object.keys(monthCols).length) break;
+  }
 
-    // Conversions by Source
-    if (c1==='Conversions by Source (Current Month)') { inConv=true; inMonthly=false; inNewRet=false; continue; }
-    if (inConv && c2 && !isNaN(parseFloat(r[3])) && c2!=='RETURNING') {
-      out.convSource.push({ source:c2, count:parseFloat(r[3]) });
-    }
+  // Build metric label → row lookup (label lives in column index 4)
+  const metrics = {};
+  for (let i = 0; i < rows.length; i++) {
+    const label = (rows[i][4]||'').trim();
+    if (label) metrics[label] = rows[i];
+  }
 
-    // New vs Returning
-    if (c1==='NEW V RETURNING CUSTOMERS BY MONTH') { inNewRet=true; inConv=false; inMonthly=false; continue; }
-    if (inNewRet && MONTHS_ORDER.includes(c1)) {
-      out.newRet.push({ month:c1, newCust:parseFloat(r[2])||0, returning:parseFloat(r[3])||0, total:parseFloat(r[4])||0 });
+  // Build monthly array in canonical order
+  for (const mn of MONTHS_ORDER) {
+    const col = monthCols[mn];
+    if (col === undefined) continue;
+    out.monthly.push({
+      month: mn,
+      orders:          metrics['Order Count']?.[col],
+      revenue:         metrics['Mthly Revenue']?.[col],
+      aov:             metrics['AOV per Month']?.[col],
+      cogs:            metrics['Total COGS per month']?.[col],
+      googleAds:       metrics['Total Google Ads Spend']?.[col],
+      metaAds:         metrics['Meta Ads']?.[col],
+      mktPerOrder:     metrics['Marketing Cost per order']?.[col],
+      roas:            metrics['Current ROAS']?.[col],
+      mktPctRev:       metrics['Mrkt cost % of Revenue']?.[col],
+      costPerOrder:    metrics['Total Cost per Order']?.[col],
+      marginPerOrder:  metrics['Gross Margin/Order']?.[col],
+      grossMarginPct:  metrics['Gross Margin %']?.[col],
+      grossProfit:     metrics['Gross Profit/Loss']?.[col],
+      dailyMktCost:    metrics['Daily mkt cost']?.[col],
+    });
+  }
+
+  // New vs Returning customers
+  for (const mn of MONTHS_ORDER) {
+    const col = monthCols[mn];
+    if (col === undefined) continue;
+    const newC = parseFloat(metrics['New Customers']?.[col]) || 0;
+    const retC = parseFloat(metrics['Returning Customers']?.[col]) || 0;
+    out.newRet.push({ month: mn, newCust: newC, returning: retC, total: newC + retC });
+  }
+
+  // Revenue by Source for the current (last) month — used in doughnut chart
+  const sourceLabels = ['Email','Google SEO (Organic)','Direct','SH | Hats Revenue','Pmax | Hats Revenue','Pmax | T-Shirts Revenue'];
+  const lastCol = monthCols[MONTHS_ORDER[MONTHS_ORDER.length - 1]];
+  if (lastCol !== undefined) {
+    for (const src of sourceLabels) {
+      const row = metrics[src] || metrics[' ' + src];
+      if (!row) continue;
+      const val = pv((row[lastCol]||'').toString());
+      if (val && val > 0) out.convSource.push({ source: src.replace(/ Revenue$/,''), count: val });
     }
   }
+
   return out;
 }
 
@@ -974,7 +1006,7 @@ function renderCharts(months, newRet) {
     });
   }
 
-  // Conversions by Source (always current month — not filtered)
+  // Revenue by Source (always current month — not filtered)
   if (D.convSource?.length) {
     mk('chartConvSource', 'doughnut', {
       labels: D.convSource.map(c=>c.source),
@@ -988,7 +1020,7 @@ function renderCharts(months, newRet) {
       responsive:true, maintainAspectRatio:false,
       plugins:{
         legend:{ position:'bottom', labels:{color:'#64748b',boxWidth:10,padding:10,font:{size:10}} },
-        tooltip:{ callbacks:{ label: c=>` ${c.label}: ${c.parsed} orders` } }
+        tooltip:{ callbacks:{ label: c=>` ${c.label}: ${fc(c.parsed)}` } }
       },
       cutout:'58%'
     });
