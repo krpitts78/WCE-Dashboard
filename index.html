@@ -586,22 +586,13 @@
 /* ══════════════════════════════════════════════════
    MONTH METADATA
 ══════════════════════════════════════════════════ */
-const MONTHS_ORDER = ['July','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
-const MONTH_LABELS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
-
-// Maps full month name → { year, quarter (1-4), YYYY-MM for range inputs }
-const MONTH_META = {
-  'July': { year:2025, q:3, val:'2025-07' },
-  'Aug':  { year:2025, q:3, val:'2025-08' },
-  'Sep':  { year:2025, q:3, val:'2025-09' },
-  'Oct':  { year:2025, q:4, val:'2025-10' },
-  'Nov':  { year:2025, q:4, val:'2025-11' },
-  'Dec':  { year:2025, q:4, val:'2025-12' },
-  'Jan':  { year:2026, q:1, val:'2026-01' },
-  'Feb':  { year:2026, q:1, val:'2026-02' },
-  'Mar':  { year:2026, q:1, val:'2026-03' },
-  'Apr':  { year:2026, q:2, val:'2026-04' },
+// Helpers for dynamically parsing "MonthName YYYY" column headers from the sheet
+const MONTH_NUM = {
+  january:1,february:2,march:3,april:4,may:5,june:6,
+  july:7,august:8,september:9,october:10,november:11,december:12,
+  jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12
 };
+const MONTH_SHORT = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const PALETTE = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16'];
 const GREEN   = '#10b981';
@@ -638,30 +629,35 @@ async function loadData() {
 }
 
 function parseSheet(rows) {
-  const out = { kpi:{}, monthly:[], totals:{}, convSource:[], newRet:[] };
+  const out = { kpi:{}, monthly:[], totals:{}, convSource:[], newRet:[], monthsOrder:[], monthMeta:{} };
 
-  // Sheet is transposed: months are column headers, metrics are rows.
-  // Find the header row containing month names (e.g. "July 2025", "Aug 2025", …)
-  const monthHeaderMap = {
-    'July 2025':'July','Aug 2025':'Aug','Sep 2025':'Sep',
-    'Oct 2025':'Oct','Nov 2025':'Nov','Dec 2025':'Dec',
-    'Jan 2026':'Jan','Feb 2026':'Feb','Mar 2026':'Mar',
-    'Apr 2026':'Apr'
-  };
-  const monthCols = {}; // MONTHS_ORDER name → column index
+  // Dynamically detect month columns from "MonthName YYYY" header cells
+  const monthCols = {}; // "Month YYYY" key → column index
 
   for (let i = 0; i < rows.length; i++) {
-    for (let j = 0; j < (rows[i]||[]).length; j++) {
-      const cell = (rows[i][j]||'').trim();
-      if (cell === 'July 2025') {
-        for (let k = j; k < rows[i].length; k++) {
-          const cn = (rows[i][k]||'').trim();
-          if (monthHeaderMap[cn]) monthCols[monthHeaderMap[cn]] = k;
+    const row = rows[i] || [];
+    const hits = row.filter(c => {
+      const t = (c||'').trim(); const p = t.match(/^([A-Za-z]+)\s+\d{4}$/);
+      return p && MONTH_NUM[p[1].toLowerCase()];
+    });
+    if (hits.length >= 2) {
+      for (let k = 0; k < row.length; k++) {
+        const cell = (row[k]||'').trim();
+        const m = cell.match(/^([A-Za-z]+)\s+(\d{4})$/);
+        if (m && MONTH_NUM[m[1].toLowerCase()]) {
+          const num   = MONTH_NUM[m[1].toLowerCase()];
+          const year  = parseInt(m[2]);
+          monthCols[cell] = k;
+          out.monthsOrder.push(cell);
+          out.monthMeta[cell] = { year, q: Math.ceil(num/3), num, val: `${year}-${String(num).padStart(2,'0')}`, label: MONTH_SHORT[num] };
         }
-        break;
       }
+      out.monthsOrder.sort((a,b) => {
+        const ma = out.monthMeta[a], mb = out.monthMeta[b];
+        return ma.year !== mb.year ? ma.year - mb.year : ma.num - mb.num;
+      });
+      break;
     }
-    if (Object.keys(monthCols).length) break;
   }
 
   // Build metric label → row lookup (label lives in column index 4)
@@ -672,7 +668,7 @@ function parseSheet(rows) {
   }
 
   // Build monthly array in canonical order
-  for (const mn of MONTHS_ORDER) {
+  for (const mn of out.monthsOrder) {
     const col = monthCols[mn];
     if (col === undefined) continue;
     out.monthly.push({
@@ -695,7 +691,7 @@ function parseSheet(rows) {
   }
 
   // New vs Returning customers
-  for (const mn of MONTHS_ORDER) {
+  for (const mn of out.monthsOrder) {
     const col = monthCols[mn];
     if (col === undefined) continue;
     const newC = parseFloat(metrics['New Customers']?.[col]) || 0;
@@ -711,7 +707,7 @@ function parseSheet(rows) {
     if (!row) continue;
     const clean = src.replace(/ Revenue$/, '').trim();
     out.revBySource[clean] = {};
-    for (const mn of MONTHS_ORDER) {
+    for (const mn of out.monthsOrder) {
       const col = monthCols[mn];
       if (col === undefined) continue;
       out.revBySource[clean][mn] = pv((row[col]||'').toString()) || 0;
@@ -729,22 +725,25 @@ function getFilteredMonths(p, from, to) {
   if (!all.length) return all;
 
   const lastMonth = all[all.length-1].month;
-  const lastIdx   = MONTHS_ORDER.indexOf(lastMonth);
-  const prevMonth = lastIdx > 0 ? MONTHS_ORDER[lastIdx-1] : null;
+  const lastIdx   = D.monthsOrder.indexOf(lastMonth);
+  const prevMonth = lastIdx > 0 ? D.monthsOrder[lastIdx-1] : null;
 
   switch(p) {
     case 'all':       return all;
     case 'thisMonth': return all.filter(m => m.month === lastMonth);
     case 'prevMonth': return prevMonth ? all.filter(m => m.month === prevMonth) : [];
-    case 'q3-2025':   return all.filter(m => MONTH_META[m.month]?.year===2025 && MONTH_META[m.month]?.q===3);
-    case 'q4-2025':   return all.filter(m => MONTH_META[m.month]?.year===2025 && MONTH_META[m.month]?.q===4);
-    case 'q1-2026':   return all.filter(m => MONTH_META[m.month]?.year===2026 && MONTH_META[m.month]?.q===1);
-    case 'q2-2026':   return all.filter(m => MONTH_META[m.month]?.year===2026 && MONTH_META[m.month]?.q===2);
-    case 'ytd':       return all.filter(m => MONTH_META[m.month]?.year===2026);
+    case 'q3-2025':   return all.filter(m => D.monthMeta[m.month]?.year===2025 && D.monthMeta[m.month]?.q===3);
+    case 'q4-2025':   return all.filter(m => D.monthMeta[m.month]?.year===2025 && D.monthMeta[m.month]?.q===4);
+    case 'q1-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===1);
+    case 'q2-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===2);
+    case 'ytd': {
+      const curYear = D.monthMeta[lastMonth]?.year || new Date().getFullYear();
+      return all.filter(m => D.monthMeta[m.month]?.year === curYear);
+    }
     case 'custom': {
       if (!from || !to) return all;
       return all.filter(m => {
-        const v = MONTH_META[m.month]?.val;
+        const v = D.monthMeta[m.month]?.val;
         return v && v >= from && v <= to;
       });
     }
@@ -774,20 +773,40 @@ function computeKPIs(months) {
   return { totalRevenue, totalOrders, aov, totalProfit, avgMargin, avgRoas, totalMkt, avgMktPct };
 }
 
-/* Period label for top badge */
+/* Period label for top badge — derived dynamically from loaded data */
 function periodLabel(p, from, to) {
-  const labels = {
-    all: 'Jul 2025 – Apr 2026',
-    thisMonth: 'Apr 2026 (This Month)',
-    prevMonth: 'Mar 2026 (Prev Month)',
-    'q3-2025': 'Q3 2025 (Jul–Sep)',
-    'q4-2025': 'Q4 2025 (Oct–Dec)',
-    'q1-2026': 'Q1 2026 (Jan–Mar)',
-    'q2-2026': 'Q2 2026 (Apr)',
-    ytd: 'YTD 2026 (Jan–Apr)',
-  };
+  const all = D.monthly || [];
   if (p === 'custom' && from && to) return `${from} → ${to}`;
-  return labels[p] || 'All Time';
+  if (!all.length) return 'All Time';
+
+  const firstMeta = D.monthMeta[all[0].month];
+  const lastMonth = all[all.length-1].month;
+  const lastMeta  = D.monthMeta[lastMonth];
+  const prevIdx   = D.monthsOrder.indexOf(lastMonth) - 1;
+  const prevMeta  = prevIdx >= 0 ? D.monthMeta[D.monthsOrder[prevIdx]] : null;
+
+  if (p === 'all') return (firstMeta && lastMeta) ? `${firstMeta.label} ${firstMeta.year} – ${lastMeta.label} ${lastMeta.year}` : 'All Time';
+  if (p === 'thisMonth') return lastMeta ? `${lastMeta.label} ${lastMeta.year} (This Month)` : 'This Month';
+  if (p === 'prevMonth') return prevMeta ? `${prevMeta.label} ${prevMeta.year} (Prev Month)` : 'Prev Month';
+
+  const qm = p.match(/^q(\d)-(\d{4})$/);
+  if (qm) {
+    const [,q,yr] = qm;
+    const qMonths = all.filter(m => D.monthMeta[m.month]?.year===+yr && D.monthMeta[m.month]?.q===+q);
+    if (!qMonths.length) return `Q${q} ${yr}`;
+    const a = D.monthMeta[qMonths[0].month], b = D.monthMeta[qMonths[qMonths.length-1].month];
+    return `Q${q} ${yr} (${a.label}–${b.label})`;
+  }
+
+  if (p === 'ytd') {
+    const curYear = lastMeta?.year || new Date().getFullYear();
+    const ytd = all.filter(m => D.monthMeta[m.month]?.year === curYear);
+    if (!ytd.length) return `YTD ${curYear}`;
+    const a = D.monthMeta[ytd[0].month], b = D.monthMeta[ytd[ytd.length-1].month];
+    return `YTD ${curYear} (${a.label}–${b.label})`;
+  }
+
+  return 'All Time';
 }
 
 /* ══════════════════════════════════════════════════
@@ -902,7 +921,7 @@ function renderCharts(months, newRet) {
     return;
   }
 
-  const labels   = months.map(m => MONTH_LABELS[MONTHS_ORDER.indexOf(m.month)] || m.month);
+  const labels   = months.map(m => D.monthMeta[m.month]?.label || m.month);
   const revenues = months.map(m => pv(m.revenue));
   const orders   = months.map(m => pv(m.orders));
   const aovs     = months.map(m => pv(m.aov));
@@ -991,7 +1010,7 @@ function renderCharts(months, newRet) {
 
   // New vs Returning
   if (newRet.length) {
-    const nrLabels = newRet.map(r => MONTH_LABELS[MONTHS_ORDER.indexOf(r.month)] || r.month);
+    const nrLabels = newRet.map(r => D.monthMeta[r.month]?.label || r.month);
     mk('chartNewRet', 'bar', {
       labels: nrLabels,
       datasets:[
