@@ -1244,25 +1244,24 @@ function plVal(str) {
 }
 
 function parsePLSheet(rows) {
-  // Find the month header row (row with JAN, FEB, etc.)
-  let monthRow = -1;
-  const months = [];
+  // Find the month header row. Pick the row with the MOST month codes (>=2) so a
+  // stray single month label in a side-note column can't hijack detection.
+  const MONTHS3 = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const isMonth = v => v.length === 3 && MONTHS3.includes(v);
+  let monthRow = -1, best = 1;
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
+    let count = 0;
+    for (let j = 2; j < rows[i].length; j++) {
+      if (isMonth((rows[i][j] || '').trim().toUpperCase())) count++;
+    }
+    if (count > best) { best = count; monthRow = i; }
+  }
+  const months = [];
+  if (monthRow !== -1) {
+    const r = rows[monthRow];
     for (let j = 2; j < r.length; j++) {
       const v = (r[j] || '').trim().toUpperCase();
-      if (['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].includes(v) && v.length === 3) {
-        if (monthRow === -1) monthRow = i;
-      }
-    }
-    if (monthRow === i) {
-      for (let j = 2; j < r.length; j++) {
-        const v = (r[j] || '').trim().toUpperCase();
-        if (v.length === 3 && ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].includes(v)) {
-          months.push({ label: v, col: j });
-        }
-      }
-      break;
+      if (isMonth(v)) months.push({ label: v, col: j });
     }
   }
 
