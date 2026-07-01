@@ -135,8 +135,8 @@
       display: grid; grid-template-columns: repeat(8, 1fr);
       gap: .75rem; margin-bottom: 1.5rem;
     }
-    @media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+    @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; } }
 
     .kpi {
       background: var(--surface); border: 1px solid var(--border);
@@ -162,7 +162,34 @@
     @media (max-width: 700px)  {
       .grid-3, .grid-3eq, .grid-2 { grid-template-columns: 1fr; }
       .main { padding: 1rem; }
-      .topbar, .filter-wrap { padding-left: 1rem; padding-right: 1rem; }
+
+      /* Top bar: let it wrap instead of cramming into a fixed 62px row */
+      .topbar {
+        position: static; height: auto; flex-wrap: wrap;
+        gap: .6rem; padding: .7rem 1rem;
+      }
+      .brand-logo { height: 30px; }
+      .tab-nav { order: 3; width: 100%; }
+      .tab-btn { flex: 1; text-align: center; padding: .5rem .6rem; }
+      .topbar-right { flex-wrap: wrap; gap: .6rem; }
+
+      /* Filter bar: drop sticky so it can't overlap content when topbar wraps */
+      .filter-wrap { position: static; padding: .6rem 1rem; }
+
+      /* Denser table on small screens; wrapper already scrolls horizontally */
+      .tbl-wrap { -webkit-overflow-scrolling: touch; }
+      thead th, td { padding: .5rem .6rem; }
+      table { font-size: .74rem; }
+    }
+
+    @media (max-width: 480px) {
+      .updated { display: none; }            /* free up header space */
+      .kpi-val { font-size: 1.2rem; }
+      .kpi { padding: .8rem .85rem; }
+      .fp { padding: .28rem .55rem; font-size: .72rem; }
+      .filter-label { margin-bottom: .1rem; }
+      .cw { height: 210px; }
+      .cw.tall { height: 230px; }
     }
 
     .card {
