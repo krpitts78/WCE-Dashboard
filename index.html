@@ -199,8 +199,6 @@
       .kpi { padding: .8rem .85rem; }
       .fp { padding: .28rem .55rem; font-size: .72rem; }
       .filter-label { margin-bottom: .1rem; }
-      .cw { height: 210px; }
-      .cw.tall { height: 230px; }
     }
 
     .card {
@@ -217,6 +215,13 @@
 
     .cw       { position: relative; height: 230px; }
     .cw.tall  { height: 270px; }
+
+    /* Small-screen chart heights. These must sit AFTER the base .cw rules above:
+       same specificity, so source order decides. Once the grids stack, bottom
+       legends wrap to two rows (Margin % carries three series), which eats ~50px
+       off the plot area — the tall charts get that height back. */
+    @media (max-width: 700px) { .cw.tall { height: 320px; } }
+    @media (max-width: 480px) { .cw { height: 210px; } .cw.tall { height: 300px; } }
 
     /* ── Table ───────────────────────────────────────────── */
     .table-card {
@@ -1313,7 +1318,6 @@ function parsePLSheet(rows) {
     months: months.map(m => m.label),
     sales,
     shippingIncome,
-    totalSales:      sales.map((v, i) => (v || 0) + (shippingIncome[i] || 0)),
     offlineSales:    hasOffline ? get('Offline Sales') : sales,
     onlineSales:     hasOffline ? get('Online Sales') : zeros(),
     hasSalesSplit:   hasOffline,
