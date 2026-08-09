@@ -579,7 +579,7 @@
   <p class="section-label">Monthly Trends</p>
   <div class="grid-3">
     <div class="card">
-      <div class="card-hd"><span class="card-title" id="plRevChartTitle">Sales</span><span class="card-tag">by month</span></div>
+      <div class="card-hd"><span class="card-title" id="plRevChartTitle">Net Sales</span><span class="card-tag">by month</span></div>
       <div class="cw tall"><canvas id="plChartRevenue"></canvas></div>
     </div>
     <div class="card">
@@ -1543,11 +1543,11 @@ function renderPLCharts(idx) {
   const m = filterArr(PL.months, idx);
   const f = (arr) => filterArr(arr, idx);
 
-  setText('plRevChartTitle', 'Sales');
+  setText('plRevChartTitle', 'Net Sales');
 
-  // Revenue — single Sales bar
+  // Revenue — single Net Sales bar
   const revDatasets = [
-    { label: 'Sales', data: f(PL.sales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1.5, borderRadius: 6 },
+    { label: 'Net Sales', data: f(PL.netSales), backgroundColor: PALETTE[0]+'cc', borderColor: PALETTE[0], borderWidth: 1.5, borderRadius: 6 },
   ];
   plMk('plChartRevenue', 'bar', { labels: m, datasets: revDatasets }, {
     responsive: true, maintainAspectRatio: false,
