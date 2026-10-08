@@ -299,11 +299,16 @@
 
   // P&L Sheets
   const PL_SPREADSHEET_ID = "1xks-eRawLAX-GfONfC4DctJQdQD9sRC2DOwOM5WrrXY";
-  const PL_GIDS = {
-    '2026': '1547773303',
-    '2025': '297808911',
+  // Tab IDs (gid) per year and accounting basis. To add a year, add one line:
+  //   '2027': { cash: '<gid of "P&L 2027 (cash)">', accrual: '<gid of "P&L 2027 (accrual)">' },
+  // Find a tab's gid in the sheet URL after clicking the tab (…/edit#gid=NNNN).
+  // Use null for a tab that doesn't exist yet; the switch greys that option out.
+  const PL_TABS = {
+    '2026': { cash: '1547773303', accrual: '119291189' },  // "P&L 2026 (cash)" / "P&L 2026 (accrual)"
+    '2025': { cash: '297808911',  accrual: null },         // "2025 FINAL" (not yet renamed); accrual tab TBD
   };
-  const plCsvUrl = (year) => `https://docs.google.com/spreadsheets/d/${PL_SPREADSHEET_ID}/export?format=csv&gid=${PL_GIDS[year]}`;
+  const PL_BASES = ['cash', 'accrual'];
+  const plCsvUrl = (year, basis) => `https://docs.google.com/spreadsheets/d/${PL_SPREADSHEET_ID}/export?format=csv&gid=${PL_TABS[year][basis]}`;
 </script>
 
 <!-- Loading -->
@@ -524,11 +529,18 @@
     <button class="fp active" onclick="selectPLYear(this,'2026')">2026</button>
   </div>
   <span class="filter-sep">·</span>
+  <span class="filter-label">Basis:</span>
+  <div class="filter-pills" id="plBasisPills">
+    <button class="fp active" data-basis="cash"    onclick="selectPLBasis(this,'cash')">Cash</button>
+    <button class="fp"        data-basis="accrual" onclick="selectPLBasis(this,'accrual')">Accrual</button>
+  </div>
+  <span class="filter-sep">·</span>
   <span class="filter-label">Period:</span>
   <div class="filter-pills" id="plFilterPills">
     <!-- pills injected dynamically after data loads -->
   </div>
-  <span class="period-badge" id="plPeriodBadge">All 2026</span>
+  <span class="period-badge" id="plPeriodBadge">All 2026 · Cash</span>
+  <span class="updated" id="plBasisNote" style="color:var(--amber);display:none"></span>
 
   <!-- Custom range (hidden until "Custom" clicked) -->
   <div class="custom-range hidden" id="plCustomRange">
@@ -1196,8 +1208,13 @@ function showOverlay(type, on, msg='') {
 /* ══════════════════════════════════════════════════
    TAB SWITCHING
 ══════════════════════════════════════════════════ */
-let plLoadedYears = {};  // { '2025': data, '2026': data }
+let plLoaded = {};       // { '2026|cash': data, '2026|accrual': data, … }
 let plYear   = '2026';
+let plBasis  = 'cash';  // 'cash' | 'accrual'
+try { const b = localStorage.getItem('wcePlBasis'); if (PL_BASES.includes(b)) plBasis = b; } catch(e) {}
+let plNoteMsg = '';      // explanatory note kept visible until the next year/basis change
+const plKey  = () => `${plYear}|${plBasis}`;
+const BASIS_LABEL = { cash: 'Cash', accrual: 'Accrual' };
 let plFilter = 'all';  // 'all' or month index array
 
 function switchTab(tab) {
@@ -1207,7 +1224,8 @@ function switchTab(tab) {
   if (tab === 'pl') {
     document.querySelectorAll('.tab-btn')[1].classList.add('active');
     document.getElementById('tab-pl').classList.add('active');
-    if (!plLoadedYears[plYear]) loadPLData(); else renderPL();
+    syncPLBasisUI();
+    if (!plLoaded[plKey()]) loadPLData(); else { PL = plLoaded[plKey()]; renderPL(); }
   } else {
     document.querySelectorAll('.tab-btn')[0].classList.add('active');
     document.getElementById('tab-adspend').classList.add('active');
@@ -1223,16 +1241,20 @@ let plCharts = {};
 async function loadPLData() {
   showOverlay('loading', true);
   try {
-    const url = plCsvUrl(plYear);
+    const key = plKey();
+    const url = plCsvUrl(plYear, plBasis);
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
     const parsed = parsePLSheet(rows);
-    plLoadedYears[plYear] = parsed;
+    plLoaded[key] = parsed;
+    // Ignore a slow response if the user already switched to another year/basis
+    if (key !== plKey()) return;
     PL = parsed;
     plFilter = 'all';
     buildPLFilterPills();
+    syncPLBasisUI();
     renderPL();
   } catch(e) {
     showOverlay('error', true, e.message);
@@ -1245,13 +1267,67 @@ function selectPLYear(btn, year) {
   btn.classList.add('active');
   plYear = year;
   plFilter = 'all';
-  if (plLoadedYears[year]) {
-    PL = plLoadedYears[year];
+  // If the chosen basis has no tab for this year yet, fall back to one that does
+  let fellBack = null;
+  if (!PL_TABS[plYear]?.[plBasis]) {
+    const alt = PL_BASES.find(b => PL_TABS[plYear]?.[b]);
+    if (alt) { fellBack = `${BASIS_LABEL[plBasis]} tab for ${plYear} isn't set up yet — showing ${BASIS_LABEL[alt]}`; plBasis = alt; }
+  }
+  plNoteMsg = fellBack || '';
+  syncPLBasisUI();
+  if (plLoaded[plKey()]) {
+    PL = plLoaded[plKey()];
     buildPLFilterPills();
     renderPL();
   } else {
     loadPLData();
   }
+}
+
+function selectPLBasis(btn, basis) {
+  if (btn.disabled || basis === plBasis) return;
+  plBasis = basis;
+  plFilter = 'all';
+  try { localStorage.setItem('wcePlBasis', basis); } catch(e) {}
+  plNoteMsg = '';
+  syncPLBasisUI();
+  if (plLoaded[plKey()]) {
+    PL = plLoaded[plKey()];
+    buildPLFilterPills();
+    renderPL();
+  } else {
+    loadPLData();
+  }
+}
+
+// Keeps the Cash/Accrual buttons, badge and notes in step with the year/basis in use
+function syncPLBasisUI() {
+  // Disable a basis that has no tab configured for the selected year
+  if (!PL_TABS[plYear]?.[plBasis]) {
+    const alt = PL_BASES.find(b => PL_TABS[plYear]?.[b]);
+    if (alt) plBasis = alt;
+  }
+  document.querySelectorAll('#plBasisPills .fp').forEach(b => {
+    const basis = b.dataset.basis;
+    const ok = !!PL_TABS[plYear]?.[basis];
+    b.disabled = !ok;
+    b.style.opacity = ok ? '' : '.35';
+    b.style.cursor  = ok ? '' : 'not-allowed';
+    b.title = ok ? '' : `No ${BASIS_LABEL[basis]} tab for ${plYear} yet`;
+    b.classList.toggle('active', basis === plBasis);
+  });
+  const noteEl = document.getElementById('plBasisNote');
+  if (noteEl) {
+    // Guard against a mislabelled tab: the sheet prints "CASH BASIS" / "ACCRUAL BASIS" in its header
+    const loaded = plLoaded[plKey()];
+    let msg = plNoteMsg || '';
+    if (!msg && loaded?.sheetBasis && loaded.sheetBasis !== plBasis) {
+      msg = `⚠ This tab says "${loaded.sheetBasis.toUpperCase()} BASIS" — check the tab mapping`;
+    }
+    noteEl.textContent = msg;
+    noteEl.style.display = msg ? '' : 'none';
+  }
+  updatePLBadge();
 }
 
 function plVal(str) {
@@ -1314,7 +1390,18 @@ function parsePLSheet(rows) {
 
   const hasOffline = Object.keys(data).some(k => k.toLowerCase().includes('offline'));
 
+  // Basis printed in the sheet header ("CASH BASIS" / "ACCRUAL BASIS"), used as a sanity check
+  let sheetBasis = null;
+  for (let i = 0; i < Math.min(rows.length, 12); i++) {
+    for (const c of (rows[i] || [])) {
+      const t = String(c || '').trim().toUpperCase();
+      if (t === 'CASH BASIS') sheetBasis = 'cash';
+      else if (t === 'ACCRUAL BASIS') sheetBasis = 'accrual';
+    }
+  }
+
   const out = {
+    sheetBasis,
     months: months.map(m => m.label),
     sales,
     shippingIncome,
@@ -1454,15 +1541,16 @@ function applyPLCustomRange() {
 
 function updatePLBadge() {
   const badge = document.getElementById('plPeriodBadge');
+  const basisTxt = ' · ' + BASIS_LABEL[plBasis];
   if (plFilter === 'all') {
-    badge.textContent = 'All ' + plYear;
+    badge.textContent = 'All ' + plYear + basisTxt;
     badge.classList.remove('filtered');
   } else {
     const names = plFilter.map(i => PL.months[i]);
     if (names.length <= 3) {
-      badge.textContent = names.join(', ') + ' ' + plYear;
+      badge.textContent = names.join(', ') + ' ' + plYear + basisTxt;
     } else {
-      badge.textContent = names[0] + ' – ' + names[names.length - 1] + ' ' + plYear;
+      badge.textContent = names[0] + ' – ' + names[names.length - 1] + ' ' + plYear + basisTxt;
     }
     badge.classList.add('filtered');
   }
@@ -1515,7 +1603,7 @@ function renderPL() {
   setText('pl-k-contrib', fc(totalContrib));
   setText('pl-k-contrib-sub', avgContribPct.toFixed(1) + '% of net sales');
   setText('pl-k-adcost', fc(totalAdCost));
-  setText('plSummaryLabel', 'P&L Summary — ' + (plFilter === 'all' ? plYear + (plYear === '2025' ? '' : ' YTD') : m.join(', ') + ' ' + plYear));
+  setText('plSummaryLabel', 'P&L Summary — ' + BASIS_LABEL[plBasis] + ' basis — ' + (plFilter === 'all' ? plYear + (plYear === '2025' ? '' : ' YTD') : m.join(', ') + ' ' + plYear));
 
   const gmEl = document.getElementById('pl-k-grossmargin');
   gmEl.textContent = fc(totalGrossMargin);

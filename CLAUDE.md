@@ -79,3 +79,12 @@ Sortable table with 15 columns per month. Includes a computed totals/averages ro
 - Font: Segoe UI / system-ui
 - Sticky top bar + filter bar (z-index 100/99)
 - Responsive grid breakpoints at 1400px and 700px
+
+## P&L tab (Cash / Accrual)
+
+The Profit & Loss tab reads a separate Google Sheet (`PL_SPREADSHEET_ID`), one tab per year **and** accounting basis, named `P&L YYYY (cash)` and `P&L YYYY (accrual)`.
+- `PL_TABS` maps `year -> { cash: gid, accrual: gid }`. **To add a year, add one line** with the two tab gids (gid is in the sheet URL after clicking the tab). Use `null` for a tab that doesn't exist yet; the Cash/Accrual switch greys that option out.
+- State: `plYear`, `plBasis` (persisted in localStorage as `wcePlBasis`), data cached in `plLoaded['YYYY|basis']`.
+- `selectPLBasis()` / `selectPLYear()` / `syncPLBasisUI()` drive the switch. A year without the chosen basis falls back to the other one with a visible note.
+- `parsePLSheet()` also reads the "CASH BASIS" / "ACCRUAL BASIS" header printed in the tab and warns if it doesn't match the selected basis (catches a mis-mapped gid).
+- Tabs are fetched by gid via `export?format=csv`; do not switch to the `gviz` endpoint — it drops the JAN–DEC date header row.
