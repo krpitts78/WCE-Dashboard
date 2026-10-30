@@ -376,6 +376,8 @@
     <button class="fp q-pill" data-preset="q4-2025"   onclick="selectPreset(this)">Q4 '25</button>
     <button class="fp q-pill" data-preset="q1-2026"   onclick="selectPreset(this)">Q1 '26</button>
     <button class="fp q-pill" data-preset="q2-2026"   onclick="selectPreset(this)">Q2 '26</button>
+    <button class="fp q-pill" data-preset="q3-2026"   onclick="selectPreset(this)">Q3 '26</button>
+    <button class="fp q-pill" data-preset="q4-2026"   onclick="selectPreset(this)">Q4 '26</button>
     <span class="filter-sep">·</span>
     <button class="fp"        data-preset="ytd"       onclick="selectPreset(this)">YTD</button>
     <button class="fp"        data-preset="custom"    onclick="selectPreset(this)">Custom&nbsp;▾</button>
@@ -385,11 +387,11 @@
   <div class="custom-range hidden" id="customRange">
     <label>
       From
-      <input type="month" id="fromMonth" min="2025-07" max="2026-04" value="2025-07" />
+      <input type="month" id="fromMonth" min="2025-07" max="2026-12" value="2025-07" />
     </label>
     <label>
       To
-      <input type="month" id="toMonth"   min="2025-07" max="2026-04" value="2026-04" />
+      <input type="month" id="toMonth"   min="2025-07" max="2026-12" value="2026-10" />
     </label>
     <button class="apply-btn" onclick="applyCustomRange()">Apply</button>
   </div>
@@ -434,7 +436,7 @@
     <div class="kpi" style="--kpi-c:var(--red)">
       <div class="kpi-label">Total Mkt Spend</div>
       <div class="kpi-val" id="k-mkt">—</div>
-      <div class="kpi-sub">Google + Meta</div>
+      <div class="kpi-sub">All ad platforms</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--amber)">
       <div class="kpi-label">Avg Mkt % of Rev</div>
@@ -467,7 +469,7 @@
       <div class="cw"><canvas id="chartProfit"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-hd"><span class="card-title">Ad Spend — Google vs Meta</span><span class="card-tag">monthly</span></div>
+      <div class="card-hd"><span class="card-title">Ad Spend by Campaign</span><span class="card-tag">monthly</span></div>
       <div class="cw"><canvas id="chartAdspend"></canvas></div>
     </div>
     <div class="card">
@@ -722,6 +724,28 @@ function parseSheet(rows) {
     if (label) metrics[label] = rows[i];
   }
 
+  // Per-campaign ad spend: rows between "Google Ad Spend by Campaign" and
+  // "Total Google Ads Spend", plus Meta / OpenAI as their own series.
+  out.adSpendBySource = [];   // [{ name, byMonth: { month: value } }]
+  const spendRow = (name, row) => {
+    const byMonth = {};
+    for (const mn of out.monthsOrder) {
+      const col = monthCols[mn];
+      byMonth[mn] = col === undefined ? 0 : (pv((row[col]||'').toString()) || 0);
+    }
+    out.adSpendBySource.push({ name, byMonth });
+  };
+  let inCampaigns = false;
+  for (const row of rows) {
+    const label = ((row||[])[4]||'').trim();
+    if (label === 'Google Ad Spend by Campaign') { inCampaigns = true; continue; }
+    if (label === 'Total Google Ads Spend') { inCampaigns = false; continue; }
+    if (inCampaigns && label) spendRow(label, row);
+  }
+  for (const label of ['OpenAi Ads', 'Meta Ads']) {
+    if (metrics[label]) spendRow(label.replace('OpenAi', 'OpenAI'), metrics[label]);
+  }
+
   // Build monthly array in canonical order
   for (const mn of out.monthsOrder) {
     const col = monthCols[mn];
@@ -734,6 +758,7 @@ function parseSheet(rows) {
       cogs:            metrics['Total COGS per month']?.[col],
       googleAds:       metrics['Total Google Ads Spend']?.[col],
       metaAds:         metrics['Meta Ads']?.[col],
+      openAiAds:       metrics['OpenAi Ads']?.[col],
       mktPerOrder:     metrics['Marketing Cost per order']?.[col],
       roas:            metrics['Current ROAS']?.[col],
       mktPctRev:       metrics['Mrkt cost % of Revenue']?.[col],
@@ -791,6 +816,8 @@ function getFilteredMonths(p, from, to) {
     case 'q4-2025':   return all.filter(m => D.monthMeta[m.month]?.year===2025 && D.monthMeta[m.month]?.q===4);
     case 'q1-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===1);
     case 'q2-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===2);
+    case 'q3-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===3);
+    case 'q4-2026':   return all.filter(m => D.monthMeta[m.month]?.year===2026 && D.monthMeta[m.month]?.q===4);
     case 'ytd': {
       const curYear = D.monthMeta[lastMonth]?.year || new Date().getFullYear();
       return all.filter(m => D.monthMeta[m.month]?.year === curYear);
@@ -822,7 +849,7 @@ function computeKPIs(months) {
   const avgMargin    = marginVals.length ? marginVals.reduce((a,b)=>a+b,0)/marginVals.length : 0;
   const roasVals     = months.map(m=>pv(m.roas)).filter(v=>v!=null);
   const avgRoas      = roasVals.length ? roasVals.reduce((a,b)=>a+b,0)/roasVals.length : 0;
-  const totalMkt     = months.reduce((s,m) => s+(pv(m.googleAds)||0)+(pv(m.metaAds)||0), 0);
+  const totalMkt     = months.reduce((s,m) => s+(pv(m.googleAds)||0)+(pv(m.metaAds)||0)+(pv(m.openAiAds)||0), 0);
   const mktPctVals   = months.map(m=>pv(m.mktPctRev)).filter(v=>v!=null);
   const avgMktPct    = mktPctVals.length ? mktPctVals.reduce((a,b)=>a+b,0)/mktPctVals.length : 0;
   return { totalRevenue, totalOrders, aov, totalProfit, avgMargin, avgRoas, totalMkt, avgMktPct };
@@ -981,8 +1008,15 @@ function renderCharts(months, newRet) {
   const roas     = months.map(m => pv(m.roas));
   const margins  = months.map(m => pv(m.grossMarginPct));
   const profits  = months.map(m => pv(m.grossProfit));
-  const google   = months.map(m => pv(m.googleAds)||0);
-  const meta     = months.map(m => pv(m.metaAds)||0);
+  // One line per campaign / platform; hide series with no spend in the period
+  const spendSeries = (D.adSpendBySource||[])
+    .map(s => ({ name:s.name, data: months.map(m => s.byMonth[m.month]||0) }))
+    .filter(s => s.data.some(v => v > 0))
+    .map((s,i) => ({
+      label:s.name, data:s.data,
+      borderColor:PALETTE[i%PALETTE.length], backgroundColor:PALETTE[i%PALETTE.length]+'22',
+      pointBackgroundColor:PALETTE[i%PALETTE.length], borderWidth:2, tension:0.3, pointRadius:3, fill:false
+    }));
 
   const maxRev = Math.max(...revenues.filter(Boolean), 1);
 
@@ -1032,13 +1066,10 @@ function renderCharts(months, newRet) {
     }]
   }, baseOpts(v=>shortCurrency(v), c=>` ${fc(c.parsed.y)}`));
 
-  // Ad Spend — Google vs Meta (line)
+  // Ad Spend by campaign (line)
   mk('chartAdspend', 'line', {
     labels,
-    datasets: [
-      { label:'Google Ads', data:google, borderColor:PALETTE[0], backgroundColor:PALETTE[0]+'22', pointBackgroundColor:PALETTE[0], borderWidth:2, tension:0.3, pointRadius:3, fill:false },
-      { label:'Meta Ads',   data:meta,   borderColor:PALETTE[5], backgroundColor:PALETTE[5]+'22', pointBackgroundColor:PALETTE[5], borderWidth:2, tension:0.3, pointRadius:3, fill:false }
-    ]
+    datasets: spendSeries
   }, {
     responsive:true, maintainAspectRatio:false,
     plugins:{
