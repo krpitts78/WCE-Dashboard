@@ -741,7 +741,10 @@ async function applyLiveData(d) {
     const aov = orders ? rev / orders : 0;
     const days = key === thisKey ? Math.max(1, today.getDate()) : new Date(+key.slice(0, 4), +key.slice(5), 0).getDate();
     // The sheet's own formulas: shipping 2.5% of the order, labour and thread 12%.
-    const costPerOrder = (orders ? L.cogs / orders : 0) + (orders ? mkt / orders : 0) + aov * 0.025 + aov * 0.12;
+    // The sheet only started charging the 12% from Sep 2026 (the row is blank for Aug),
+    // so earlier months keep the margin they were always shown with.
+    const labour = key >= '2026-09' ? aov * 0.12 : 0;
+    const costPerOrder = (orders ? L.cogs / orders : 0) + (orders ? mkt / orders : 0) + aov * 0.025 + labour;
     const marginPerOrder = aov - costPerOrder;
     Object.assign(row, {
       orders: String(orders), revenue: money2(rev), aov: money2(aov), cogs: money2(L.cogs),
