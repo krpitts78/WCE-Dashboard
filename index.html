@@ -500,11 +500,17 @@
   <div class="card" id="cardSources" style="margin-bottom:1rem">
     <div class="card-hd">
       <span class="card-title">Orders by Source</span>
+      <span style="display:flex;gap:6px">
+      <select id="srcType" style="background:#1a2035;color:#94a3b8;border:1px solid #252d45;border-radius:6px;padding:2px 6px;font-size:11px">
+        <option value="bar">Stacked bars</option>
+        <option value="line">Lines (trends)</option>
+      </select>
       <select id="srcMetric" style="background:#1a2035;color:#94a3b8;border:1px solid #252d45;border-radius:6px;padding:2px 6px;font-size:11px">
         <option value="orders">Orders</option>
         <option value="revenue">Revenue</option>
         <option value="share">% of orders</option>
       </select>
+      </span>
     </div>
     <div class="cw tall"><canvas id="chartSources"></canvas></div>
   </div>
@@ -1125,11 +1131,13 @@ function renderSourceChart(months) {
   // "Jul" alone is ambiguous across a year boundary, so add the year where it spans two.
   const multiYear = new Set(rows.map(r => r.year)).size > 1;
   const labels = rows.map(r => multiYear ? `${r.label} ${String(r.year).slice(2)}` : r.label);
+  const isLine = (document.getElementById('srcType') || {}).value === 'line';
   const field = metric === 'revenue' ? 'revenue' : 'orders';
   const totals = rows.map(r => Object.values(r.src).reduce((a, s) => a + (s.orders || 0), 0));
   const datasets = SOURCE_META
     .map(([key, name, color]) => ({
-      label: name, backgroundColor: color + 'dd', borderColor: color, borderWidth: 1,
+      label: name, backgroundColor: isLine ? color : color + 'dd', borderColor: color, borderWidth: isLine ? 2 : 1,
+      ...(isLine ? { tension: 0.3, pointRadius: 3, fill: false } : {}),
       data: rows.map((r, i) => {
         const v = (r.src[key] || {})[field] || 0;
         return metric === 'share' ? (totals[i] ? v / totals[i] * 100 : 0) : v;
@@ -1138,7 +1146,7 @@ function renderSourceChart(months) {
     .filter(ds => ds.data.some(v => v > 0));
 
   const fmt = v => metric === 'revenue' ? fc(v) : metric === 'share' ? v.toFixed(0) + '%' : String(v);
-  mk('chartSources', 'bar', { labels, datasets }, {
+  mk('chartSources', isLine ? 'line' : 'bar', { labels, datasets }, {
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
@@ -1146,14 +1154,14 @@ function renderSourceChart(months) {
       tooltip: { callbacks: { label: c => c.parsed.y ? ` ${c.dataset.label}: ${fmt(c.parsed.y)}` : null } },
     },
     scales: {
-      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
-      y: { stacked: true, max: metric === 'share' ? 100 : undefined,
+      x: { stacked: !isLine, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: !isLine, max: metric === 'share' ? 100 : undefined,
            ticks: { color: '#64748b', font: { size: 10 }, callback: v => metric === 'revenue' ? shortCurrency(v) : metric === 'share' ? v + '%' : v },
            grid: { color: '#252d45' } },
     },
   });
 }
-document.getElementById('srcMetric')?.addEventListener('change', () => renderSourceChart(lastSourceMonths));
+['srcMetric', 'srcType'].forEach(id => document.getElementById(id)?.addEventListener('change', () => renderSourceChart(lastSourceMonths)));
 
 function renderCharts(months, newRet) {
   if (!months.length) {
