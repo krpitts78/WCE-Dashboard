@@ -1,0 +1,203 @@
+{
+  "generatedAt": "2026-10-31T15:11:54.231Z",
+  "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
+  "months": {
+    "2026-08": {
+      "orders": 94,
+      "revenue": 95817.78,
+      "cogs": 48793.7,
+      "newCustomers": 65,
+      "returningCustomers": 24,
+      "googleSpend": {
+        "SH | Hats": 12852.64,
+        "DGen": 271.2,
+        "Search | Hats": 1949.9
+      },
+      "bySource": {
+        "ads-google": {
+          "orders": 42,
+          "revenue": 64987.939999999995
+        },
+        "direct": {
+          "orders": 20,
+          "revenue": 7246.96
+        },
+        "internal": {
+          "orders": 1,
+          "revenue": 645.85
+        },
+        "no_data": {
+          "orders": 4,
+          "revenue": 2878.69
+        },
+        "organic-chatgpt": {
+          "orders": 10,
+          "revenue": 6729.959999999999
+        },
+        "organic-search": {
+          "orders": 16,
+          "revenue": 7689.77
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 5205.6
+        }
+      },
+      "byCampaign": {
+        "{campaignname}": {
+          "orders": 2,
+          "revenue": 625.78
+        },
+        "Pmax_Hats": {
+          "orders": 1,
+          "revenue": 294
+        },
+        "Pmax_TShirts": {
+          "orders": 1,
+          "revenue": 98.6
+        },
+        "sh-hats": {
+          "orders": 28,
+          "revenue": 19133.82
+        },
+        "untagged (pre-template)": {
+          "orders": 7,
+          "revenue": 8208.31
+        }
+      },
+      "openAiSpend": 0,
+      "openAiEstimated": false,
+      "googleSpendTotal": 15073.74,
+      "totalAdSpend": 15073.74
+    },
+    "2026-09": {
+      "orders": 106,
+      "revenue": 71782.91,
+      "cogs": 30240.96,
+      "newCustomers": 75,
+      "returningCustomers": 26,
+      "googleSpend": {
+        "SH | Hats": 14456.5,
+        "Search | Hats": 3982.14,
+        "DGen": 304.52
+      },
+      "bySource": {
+        "ads-google": {
+          "orders": 54,
+          "revenue": 43636.509999999995
+        },
+        "direct": {
+          "orders": 30,
+          "revenue": 18745.74
+        },
+        "no_data": {
+          "orders": 7,
+          "revenue": 4046.56
+        },
+        "organic-chatgpt": {
+          "orders": 6,
+          "revenue": 2231.46
+        },
+        "organic-search": {
+          "orders": 8,
+          "revenue": 3564.32
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 374.51
+        }
+      },
+      "byCampaign": {
+        "Pmax_Hats": {
+          "orders": 1,
+          "revenue": 531.6
+        },
+        "search-hats": {
+          "orders": 6,
+          "revenue": 3329.46
+        },
+        "SH_Hats": {
+          "orders": 1,
+          "revenue": 559.68
+        },
+        "sh-hats": {
+          "orders": 35,
+          "revenue": 22410.34
+        },
+        "untagged (pre-template)": {
+          "orders": 9,
+          "revenue": 15445.73
+        }
+      },
+      "openAiSpend": 0,
+      "openAiEstimated": false,
+      "googleSpendTotal": 18743.16,
+      "totalAdSpend": 18743.16
+    },
+    "2026-10": {
+      "orders": 77,
+      "revenue": 58079.03,
+      "cogs": 24368.09,
+      "newCustomers": 59,
+      "returningCustomers": 16,
+      "googleSpend": {
+        "SH | Hats": 15757.98,
+        "Search | Hats": 5008.18,
+        "DGen": 124.99,
+        "DR | Remarketing": 120.07
+      },
+      "bySource": {
+        "ads-google": {
+          "orders": 32,
+          "revenue": 17170.78
+        },
+        "direct": {
+          "orders": 17,
+          "revenue": 28754.11
+        },
+        "internal": {
+          "orders": 1,
+          "revenue": 25.15
+        },
+        "no_data": {
+          "orders": 8,
+          "revenue": 5507.6
+        },
+        "organic-chatgpt": {
+          "orders": 8,
+          "revenue": 2243.25
+        },
+        "organic-search": {
+          "orders": 10,
+          "revenue": 5216.37
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 805.05
+        }
+      },
+      "byCampaign": {
+        "{campaignname}": {
+          "orders": 1,
+          "revenue": 531.6
+        },
+        "search-hats": {
+          "orders": 11,
+          "revenue": 7182.65
+        },
+        "sh-hats": {
+          "orders": 16,
+          "revenue": 7443.5
+        },
+        "untagged (pre-template)": {
+          "orders": 2,
+          "revenue": 1524.87
+        }
+      },
+      "openAiSpend": 250,
+      "openAiEstimated": true,
+      "googleSpendTotal": 21011.22,
+      "totalAdSpend": 21261.22
+    }
+  }
+}
