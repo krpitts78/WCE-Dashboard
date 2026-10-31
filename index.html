@@ -547,7 +547,7 @@
   <p class="section-label">Pop-up Stores</p>
   <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr) !important;">
     <div class="kpi" style="--kpi-c:var(--blue)"><div class="kpi-label">Stores</div><div class="kpi-val" id="st-stores">—</div><div class="kpi-sub" id="st-stores-sub"></div></div>
-    <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Store Sales</div><div class="kpi-val" id="st-rev">—</div><div class="kpi-sub">all non-cancelled orders</div></div>
+    <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Store Sales</div><div class="kpi-val" id="st-rev">—</div><div class="kpi-sub">excludes fundraiser money</div></div>
     <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">Orders</div><div class="kpi-val" id="st-orders">—</div><div class="kpi-sub" id="st-aov"></div></div>
     <div class="kpi" style="--kpi-c:var(--red)"><div class="kpi-label">Store COGS</div><div class="kpi-val" id="st-cogs">—</div><div class="kpi-sub" id="st-cogs-sub"></div></div>
     <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Gross Margin</div><div class="kpi-val" id="st-margin">—</div><div class="kpi-sub" id="st-profit-sub"></div></div>
@@ -579,7 +579,7 @@
     <table><thead><tr><th>Store</th><th style="text-align:left">Organization</th><th style="text-align:left">Payment</th><th style="text-align:left">Active</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
     <tbody id="stBody"></tbody></table>
   </div></div>
-  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are the store order totals from the OMS. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Margin is Shopify sales minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin.</p>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are store order totals from the OMS minus the fundraiser contribution, which is passed to the organization and is not revenue (it is shown separately). Tax and shipping on an order are still included. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Margin is Shopify sales (also minus the fundraiser) minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin.</p>
   </div>
 </div>
 
@@ -1521,8 +1521,8 @@ function renderStores() {
   const byStore = {};
   for (const r of rows) {
     const s = (byStore[r.slug] ||= { name: r.name, org: r.org, status: r.status, mode: r.payment_mode, orders: 0, units: 0, total: 0, fundraiser: 0, cogs: 0, cogsSales: 0, hasCogs: false, first: r.month, last: r.month });
-    s.orders += r.orders; s.units += r.units; s.total += r.total; s.fundraiser += r.fundraiser;
-    if (r.cogs != null) { s.cogs += r.cogs; s.cogsSales += r.cogsSales; s.hasCogs = true; }
+    s.orders += r.orders; s.units += r.units; s.total += r.total - r.fundraiser; s.fundraiser += r.fundraiser;   // fundraiser money goes to the organization, so it is not our sale
+    if (r.cogs != null) { s.cogs += r.cogs; s.cogsSales += r.cogsSales - r.fundraiser; s.hasCogs = true; }
     if (r.month < s.first) s.first = r.month;
     if (r.month > s.last) s.last = r.month;
   }
@@ -1570,7 +1570,7 @@ function renderStores() {
   const monthKeys = [...new Set(rows.map(r => r.month))].sort();
   const datasets = orgList.map(([n], i) => ({
     label: n, backgroundColor: ORG_COLORS[i % ORG_COLORS.length] + 'dd', borderColor: ORG_COLORS[i % ORG_COLORS.length], borderWidth: 1,
-    data: monthKeys.map(m => rows.filter(r => r.month === m && (r.org || '—') === n).reduce((a, r) => a + (metric === 'profit' ? (r.cogs == null ? 0 : r.cogsSales - r.cogs) : (r[metric] || 0)), 0)),
+    data: monthKeys.map(m => rows.filter(r => r.month === m && (r.org || '—') === n).reduce((a, r) => a + (metric === 'profit' ? (r.cogs == null ? 0 : r.cogsSales - r.fundraiser - r.cogs) : metric === 'total' ? r.total - r.fundraiser : (r[metric] || 0)), 0)),
   }));
   const money = metric !== 'orders' && metric !== 'units';
   mk('chartStores', 'bar', { labels: monthKeys.map(mLabel), datasets }, {
