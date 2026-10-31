@@ -363,6 +363,7 @@
     <button class="tab-btn active" onclick="switchTab('adspend')">Online Sales</button>
     <button class="tab-btn" onclick="switchTab('pl')">Profit &amp; Loss</button>
     <button class="tab-btn" onclick="switchTab('stores')">Pop-up Stores</button>
+    <button class="tab-btn" onclick="switchTab('offline')">Offline Sales</button>
   </div>
   <div class="topbar-right">
     <span class="period-badge" id="periodBadge">All Time</span>
@@ -594,6 +595,38 @@
     <tbody id="stBody"></tbody></table>
   </div></div>
   <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are store order totals from the OMS minus the fundraiser contribution, which is passed to the organization and is not revenue (it is shown separately). Tax and shipping on an order are still included. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Margin is Shopify sales (also minus the fundraiser) minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin.</p>
+  </div>
+</div>
+
+<!-- ══════ OFFLINE TAB ══════ -->
+<div class="tab-content" id="tab-offline">
+  <div class="main">
+  <p class="section-label">Offline Sales</p>
+  <div class="kpi-grid kpi-6">
+    <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Offline Sales</div><div class="kpi-val" id="of-rev">—</div><div class="kpi-sub" id="of-span"></div></div>
+    <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">Orders</div><div class="kpi-val" id="of-orders">—</div><div class="kpi-sub">non-cancelled</div></div>
+    <div class="kpi" style="--kpi-c:var(--blue)"><div class="kpi-label">Avg Order</div><div class="kpi-val" id="of-aov">—</div><div class="kpi-sub">per order</div></div>
+    <div class="kpi" style="--kpi-c:var(--red)"><div class="kpi-label">COGS</div><div class="kpi-val" id="of-cogs">—</div><div class="kpi-sub">from Shopify</div></div>
+    <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Gross Margin</div><div class="kpi-val" id="of-margin">—</div><div class="kpi-sub" id="of-profit">&nbsp;</div></div>
+    <div class="kpi" style="--kpi-c:var(--amber)"><div class="kpi-label">Share of Sales</div><div class="kpi-val" id="of-share">—</div><div class="kpi-sub">offline vs online</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-hd">
+      <span class="card-title">Offline Sales by Month</span>
+      <select id="ofMetric" style="background:#1a2035;color:#94a3b8;border:1px solid #252d45;border-radius:6px;padding:2px 6px;font-size:11px">
+        <option value="sales">Sales</option><option value="profit">Gross profit</option><option value="orders">Orders</option>
+      </select>
+    </div>
+    <div class="cw tall"><canvas id="chartOffline"></canvas></div>
+  </div>
+
+  <p class="section-label">Monthly Breakdown</p>
+  <div class="table-card"><div class="tbl-wrap">
+    <table><thead><tr><th>Month</th><th style="text-align:right">Orders</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">% of all sales</th></tr></thead>
+    <tbody id="ofBody"></tbody></table>
+  </div></div>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Orders from customers tagged Offline_Customer (phone, walk-in, LSA and similar). Pop-up store orders are on their own tab and left out here. Sales and COGS come from Shopify; margin is sales minus COGS only, with no ad spend, shipping or labour, and a few orders have no cost recorded yet, which flatters it slightly. Tagging began in April 2026, so earlier months show nothing and their offline orders are still inside Online Sales.</p>
   </div>
 </div>
 
@@ -1560,6 +1593,10 @@ function switchTab(tab) {
     document.getElementById('tab-pl').classList.add('active');
     syncPLBasisUI();
     if (!plLoaded[plKey()]) loadPLData(); else { PL = plLoaded[plKey()]; renderPL(); }
+  } else if (tab === 'offline') {
+    document.querySelectorAll('.tab-btn')[3].classList.add('active');
+    document.getElementById('tab-offline').classList.add('active');
+    renderOffline();
   } else if (tab === 'stores') {
     document.querySelectorAll('.tab-btn')[2].classList.add('active');
     document.getElementById('tab-stores').classList.add('active');
@@ -1650,6 +1687,46 @@ function renderStores() {
   });
 }
 document.getElementById('stMetric')?.addEventListener('change', renderStores);
+
+/* ══════════════════════════════════════════════════
+   OFFLINE SALES
+══════════════════════════════════════════════════ */
+function renderOffline() {
+  const rows = ((D && D.live && D.live.offline) || []).slice().sort((a, b) => a.month.localeCompare(b.month));
+  const body = document.getElementById('ofBody');
+  if (!rows.length) { body.innerHTML = '<tr><td class="no-data" colspan="8">No offline data yet.</td></tr>'; return; }
+
+  // Online revenue for the same month, for the share column.
+  const onlineBy = {};
+  for (const m of D.monthly) { const v = D.monthMeta[m.month]?.val; if (v) onlineBy[v] = pv(m.revenue) || 0; }
+  const R = 'style="text-align:right"';
+  const marginTxt = (p, s) => s ? (p / s * 100).toFixed(1) + '%' : '—';
+  const shareOf = (off, on) => (on != null && off + on) ? (off / (off + on) * 100).toFixed(1) + '%' : '—';
+
+  const T = rows.reduce((a, r) => ({ orders: a.orders + r.orders, sales: a.sales + r.sales, cogs: a.cogs + r.cogs, online: a.online + (onlineBy[r.month] || 0) }), { orders: 0, sales: 0, cogs: 0, online: 0 });
+  const profit = T.sales - T.cogs;
+  document.getElementById('of-rev').textContent = fc(T.sales);
+  document.getElementById('of-span').textContent = mLabel(rows[0].month) + ' – ' + mLabel(rows[rows.length - 1].month);
+  document.getElementById('of-orders').textContent = fn(T.orders);
+  document.getElementById('of-aov').textContent = fc(T.orders ? T.sales / T.orders : 0, 2);
+  document.getElementById('of-cogs').textContent = fc(T.cogs);
+  document.getElementById('of-margin').textContent = marginTxt(profit, T.sales);
+  document.getElementById('of-profit').textContent = fc(profit) + ' gross profit';
+  document.getElementById('of-share').textContent = shareOf(T.sales, T.online);
+
+  body.innerHTML = rows.slice().reverse().map(r => {
+    const p = r.sales - r.cogs;
+    return `<tr><td>${mLabel(r.month)}</td><td ${R}>${fn(r.orders)}</td><td ${R}>${fc(r.sales, 2)}</td><td ${R}>${fc(r.orders ? r.sales / r.orders : 0, 2)}</td><td ${R}>${fc(r.cogs, 2)}</td><td ${R}>${fc(p, 2)}</td><td ${R}>${marginTxt(p, r.sales)}</td><td ${R}>${shareOf(r.sales, onlineBy[r.month])}</td></tr>`;
+  }).join('') + `<tr class="total-row"><td>Total</td><td ${R}>${fn(T.orders)}</td><td ${R}>${fc(T.sales, 2)}</td><td ${R}>${fc(T.orders ? T.sales / T.orders : 0, 2)}</td><td ${R}>${fc(T.cogs, 2)}</td><td ${R}>${fc(profit, 2)}</td><td ${R}>${marginTxt(profit, T.sales)}</td><td ${R}>${shareOf(T.sales, T.online)}</td></tr>`;
+
+  const metric = document.getElementById('ofMetric').value;
+  const val = r => metric === 'orders' ? r.orders : metric === 'profit' ? r.sales - r.cogs : r.sales;
+  mk('chartOffline', 'bar', {
+    labels: rows.map(r => mLabel(r.month)),
+    datasets: [{ data: rows.map(val), backgroundColor: GREEN + 'aa', borderColor: GREEN, borderWidth: 1.5, borderRadius: 6 }],
+  }, baseOpts(v => metric === 'orders' ? v : shortCurrency(v), c => ' ' + (metric === 'orders' ? c.parsed.y + ' orders' : fc(c.parsed.y))));
+}
+document.getElementById('ofMetric')?.addEventListener('change', renderOffline);
 
 /* ══════════════════════════════════════════════════
    P&L DATA LOADING & PARSING

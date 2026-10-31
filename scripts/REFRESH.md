@@ -82,6 +82,18 @@ FROM sales SHOW orders, total_sales, cost_of_goods_sold GROUP BY month, order_ta
 Save `{ "rows": <rows exactly as returned> }`. Only groups tagged `store:<slug>` are used; the
 script ignores the rest. If `rowCount` is 1000, stop: it was truncated.
 
+## 3c. Offline sales → `offline.json`, `offlinecounts.json`
+Customers tagged `Offline_Customer` (the mirror image of the main query). Shopify connector, `run-analytics-query`:
+```
+FROM sales SHOW orders, total_sales, cost_of_goods_sold GROUP BY month, order_tags SINCE 2025-07-01 UNTIL <today> WHERE customer_tags CONTAINS 'Offline_Customer' ORDER BY month, orders DESC LIMIT 1000
+```
+Save `{ "rows": <rows exactly as returned> }` → `offline.json`. If `rowCount` is 1000, stop. Then Supabase `execute_sql`:
+```sql
+select coalesce(json_agg(r order by r.month), '[]'::json) from (
+  select month, count(*) as orders from attribution_orders where excluded = 'offline' group by 1) r;
+```
+Save as `{ "rows": [...] }` → `offlinecounts.json`.
+
 ## 4. Build and publish
 ```
 node scripts/build-data.mjs /tmp/wce-in data.json

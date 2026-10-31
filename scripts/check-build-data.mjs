@@ -22,6 +22,9 @@ const st = JSON.parse(fs.readFileSync(out, 'utf8')).stores;
 const ff = st.find((r) => r.slug === 'faithfulfridayshirts' && r.month === '2026-07');
 eq('store COGS joins on the store: tag', [ff.cogs, ff.cogsSales], [1793.32, 4949.74]);
 eq('pay-later store has no COGS, not zero', st.find((r) => r.slug === 'ncs-employee-store').cogs, null);
+const off = JSON.parse(fs.readFileSync(out, 'utf8')).offline;
+const oa = off.find((r) => r.month === '2026-08');
+eq('offline sales leave the store: groups to the Pop-up Stores tab', [oa.sales, oa.cogs, oa.orders], [38661.02, 15061.59, 49]);
 // A mistyped row must stop the build, not publish.
 const broken = JSON.parse(fs.readFileSync('scripts/fixture/shopifyql.json','utf8'));
 broken.rows[1][3] = '89120.99';

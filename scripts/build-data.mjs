@@ -141,6 +141,26 @@ for (const [key, o] of Object.entries(months)) {
   o.totalAdSpend = round2(o.googleSpendTotal + o.openAiSpend);
 }
 
+// 6b. Offline sales: orders from customers tagged Offline_Customer (phone, walk-in, LSA...).
+//     They are the mirror image of the main numbers, which exclude them. Pop-up store orders
+//     are left out here too, since they have their own tab. Sales and COGS are Shopify's;
+//     the order count is our own (cancelled orders and $0 drafts out), as for online sales.
+//     A blank COGS means Shopify does not know the cost, so margin is slightly flattering.
+const offlineMonths = {};
+const offlineIn = read('offline.json', null);
+if (offlineIn) {
+  for (const [month, tags, , sales, cogs] of offlineIn.rows) {
+    if (String(tags).split(',').some((t) => t.trim().toLowerCase().startsWith('store:'))) continue;
+    const o = (offlineMonths[monthKey(month)] ||= { month: monthKey(month), orders: 0, sales: 0, cogs: 0 });
+    o.sales += num(sales); o.cogs += num(cogs);
+  }
+  for (const r of read('offlinecounts.json', { rows: [] }).rows) {
+    const o = (offlineMonths[monthKey(r.month)] ||= { month: monthKey(r.month), orders: 0, sales: 0, cogs: 0 });
+    o.orders = num(r.orders);
+  }
+  for (const o of Object.values(offlineMonths)) { o.sales = round2(o.sales); o.cogs = round2(o.cogs); }
+}
+
 // 7. Merge into the existing file; this run's months replace theirs.
 let existing = { months: {} };
 if (fs.existsSync(outFile)) {
@@ -157,6 +177,8 @@ const out = {
 };
 // Pop-up stores: one row per store per month, full history each run (it is small),
 // so it replaces the old copy outright. Absent input keeps whatever is already there.
+if (offlineIn) out.offline = Object.values(offlineMonths).sort((x, y) => x.month.localeCompare(y.month));
+else if (existing.offline) out.offline = existing.offline;
 const storesIn = read('stores.json', null);
 if (storesIn) {
   // Store COGS: Shopify tags each store order `store:<slug>`, so the ShopifyQL groups carrying
