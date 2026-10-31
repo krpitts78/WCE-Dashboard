@@ -2,6 +2,322 @@
   "generatedAt": "2026-10-31T15:11:54.231Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
+    "2025-07": {
+      "bySource": {
+        "ads-google": {
+          "orders": 47,
+          "revenue": 24037.23
+        },
+        "direct": {
+          "orders": 7,
+          "revenue": 2024.61
+        },
+        "organic-search": {
+          "orders": 3,
+          "revenue": 2381.95
+        }
+      }
+    },
+    "2025-08": {
+      "bySource": {
+        "ads-google": {
+          "orders": 77,
+          "revenue": 45767.6
+        },
+        "direct": {
+          "orders": 6,
+          "revenue": 3909.46
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 945.05
+        },
+        "organic-search": {
+          "orders": 4,
+          "revenue": 2842.82
+        }
+      }
+    },
+    "2025-09": {
+      "bySource": {
+        "ads-google": {
+          "orders": 113,
+          "revenue": 69980.9
+        },
+        "direct": {
+          "orders": 8,
+          "revenue": 7252.59
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 246.33
+        },
+        "organic-search": {
+          "orders": 8,
+          "revenue": 4508.76
+        },
+        "unknown": {
+          "orders": 2,
+          "revenue": 2299.14
+        }
+      }
+    },
+    "2025-10": {
+      "bySource": {
+        "ads-google": {
+          "orders": 248,
+          "revenue": 139154.37
+        },
+        "direct": {
+          "orders": 18,
+          "revenue": 18553.33
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 500.44
+        },
+        "organic-search": {
+          "orders": 12,
+          "revenue": 12891.75
+        }
+      }
+    },
+    "2025-11": {
+      "bySource": {
+        "ads-google": {
+          "orders": 230,
+          "revenue": 113725.75
+        },
+        "direct": {
+          "orders": 14,
+          "revenue": 12337.36
+        },
+        "email": {
+          "orders": 2,
+          "revenue": 781.62
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 591.18
+        },
+        "organic-chatgpt": {
+          "orders": 1,
+          "revenue": 267.65
+        },
+        "organic-search": {
+          "orders": 15,
+          "revenue": 7243.31
+        },
+        "organic-social": {
+          "orders": 1,
+          "revenue": 297.39
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 1764.65
+        }
+      }
+    },
+    "2025-12": {
+      "bySource": {
+        "ads-google": {
+          "orders": 53,
+          "revenue": 34582.44
+        },
+        "ads-other": {
+          "orders": 1,
+          "revenue": 714.76
+        },
+        "direct": {
+          "orders": 8,
+          "revenue": 10097.2
+        },
+        "no_data": {
+          "orders": 4,
+          "revenue": 1139.88
+        },
+        "organic-search": {
+          "orders": 2,
+          "revenue": 1362.11
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 293.4
+        }
+      }
+    },
+    "2026-01": {
+      "bySource": {
+        "ads-google": {
+          "orders": 56,
+          "revenue": 46197.97
+        },
+        "direct": {
+          "orders": 12,
+          "revenue": 13273.18
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 398.4
+        },
+        "organic-chatgpt": {
+          "orders": 1,
+          "revenue": 552.16
+        },
+        "organic-search": {
+          "orders": 3,
+          "revenue": 7308.25
+        },
+        "unknown": {
+          "orders": 2,
+          "revenue": 880.61
+        }
+      }
+    },
+    "2026-02": {
+      "bySource": {
+        "ads-google": {
+          "orders": 30,
+          "revenue": 25122.95
+        },
+        "direct": {
+          "orders": 12,
+          "revenue": 9944.92
+        },
+        "email": {
+          "orders": 1,
+          "revenue": 294
+        },
+        "organic-chatgpt": {
+          "orders": 1,
+          "revenue": 573.93
+        }
+      }
+    },
+    "2026-03": {
+      "bySource": {
+        "ads-google": {
+          "orders": 50,
+          "revenue": 32272.69
+        },
+        "direct": {
+          "orders": 8,
+          "revenue": 6097.59
+        },
+        "organic-chatgpt": {
+          "orders": 2,
+          "revenue": 395.64
+        },
+        "organic-search": {
+          "orders": 4,
+          "revenue": 2924.21
+        }
+      }
+    },
+    "2026-04": {
+      "bySource": {
+        "ads-google": {
+          "orders": 61,
+          "revenue": 57290.17
+        },
+        "direct": {
+          "orders": 10,
+          "revenue": 8621.11
+        },
+        "organic-search": {
+          "orders": 4,
+          "revenue": 2222.48
+        },
+        "unknown": {
+          "orders": 2,
+          "revenue": 431.45
+        }
+      }
+    },
+    "2026-05": {
+      "bySource": {
+        "ads-google": {
+          "orders": 38,
+          "revenue": 24991.83
+        },
+        "direct": {
+          "orders": 7,
+          "revenue": 9350.1
+        },
+        "no_data": {
+          "orders": 4,
+          "revenue": 9262.42
+        },
+        "organic-chatgpt": {
+          "orders": 2,
+          "revenue": 762.6
+        },
+        "organic-search": {
+          "orders": 7,
+          "revenue": 4116.38
+        },
+        "unknown": {
+          "orders": 1,
+          "revenue": 503.92
+        }
+      }
+    },
+    "2026-06": {
+      "bySource": {
+        "ads-google": {
+          "orders": 30,
+          "revenue": 25949.42
+        },
+        "direct": {
+          "orders": 11,
+          "revenue": 7203.3
+        },
+        "email": {
+          "orders": 2,
+          "revenue": 3366.06
+        },
+        "no_data": {
+          "orders": 3,
+          "revenue": 3959.95
+        },
+        "organic-chatgpt": {
+          "orders": 3,
+          "revenue": 1025.31
+        },
+        "organic-search": {
+          "orders": 8,
+          "revenue": 4404.27
+        }
+      }
+    },
+    "2026-07": {
+      "bySource": {
+        "ads-google": {
+          "orders": 51,
+          "revenue": 35364.42
+        },
+        "direct": {
+          "orders": 19,
+          "revenue": 9455.17
+        },
+        "email": {
+          "orders": 1,
+          "revenue": 330.76
+        },
+        "no_data": {
+          "orders": 1,
+          "revenue": 26.52
+        },
+        "organic-chatgpt": {
+          "orders": 4,
+          "revenue": 3795.63
+        },
+        "organic-search": {
+          "orders": 10,
+          "revenue": 4451.62
+        }
+      }
+    },
     "2026-08": {
       "orders": 94,
       "revenue": 95817.78,

@@ -496,6 +496,19 @@
 
   <hr class="div" />
 
+  <!-- Where orders came from, by month -->
+  <div class="card" id="cardSources" style="margin-bottom:1rem">
+    <div class="card-hd">
+      <span class="card-title">Orders by Source</span>
+      <select id="srcMetric" style="background:#1a2035;color:#94a3b8;border:1px solid #252d45;border-radius:6px;padding:2px 6px;font-size:11px">
+        <option value="orders">Orders</option>
+        <option value="revenue">Revenue</option>
+        <option value="share">% of orders</option>
+      </select>
+    </div>
+    <div class="cw tall"><canvas id="chartSources"></canvas></div>
+  </div>
+
   <!-- Monthly Details Table -->
   <p class="section-label">Monthly Breakdown</p>
   <div class="table-card">
@@ -1078,6 +1091,70 @@ function baseOpts(ytickFn, tooltipFn) {
   };
 }
 
+// Order sources, in the order the Order Sources page lists them. Warm = paid,
+// cool = earned, grey = nobody can say.
+const SOURCE_META = [
+  ['ads-google',      'Google Ads',     '#3b82f6'],
+  ['ads-openai',      'OpenAI Ads',     '#8b5cf6'],
+  ['ads-other',       'Other Ads',      '#06b6d4'],
+  ['organic-search',  'Organic Search', '#10b981'],
+  ['organic-chatgpt', 'ChatGPT',        '#84cc16'],
+  ['organic-social',  'Social',         '#ec4899'],
+  ['email',           'Email',          '#f59e0b'],
+  ['referral',        'Referral',       '#ef4444'],
+  ['direct',          'Direct',         '#64748b'],
+  ['internal',        'Internal',       '#475569'],
+  ['unknown',         'Unknown',        '#94a3b8'],
+  ['no_data',         'No Data',        '#334155'],
+];
+let lastSourceMonths = [];
+
+function renderSourceChart(months) {
+  lastSourceMonths = months;
+  const sel = document.getElementById('srcMetric');
+  const metric = sel ? sel.value : 'orders';
+  const live = (D.live && D.live.months) || {};
+  // Only months the order-source sync covers; sheet-only months have no source data.
+  const rows = months
+    .map(m => ({ label: D.monthMeta[m.month]?.label || m.month, year: D.monthMeta[m.month]?.year, src: (live[D.monthMeta[m.month]?.val] || {}).bySource }))
+    .filter(r => r.src);
+  const card = document.getElementById('cardSources');
+  if (card) card.style.display = rows.length ? '' : 'none';
+  if (!rows.length) { if (charts.chartSources) { charts.chartSources.destroy(); delete charts.chartSources; } return; }
+
+  // "Jul" alone is ambiguous across a year boundary, so add the year where it spans two.
+  const multiYear = new Set(rows.map(r => r.year)).size > 1;
+  const labels = rows.map(r => multiYear ? `${r.label} ${String(r.year).slice(2)}` : r.label);
+  const field = metric === 'revenue' ? 'revenue' : 'orders';
+  const totals = rows.map(r => Object.values(r.src).reduce((a, s) => a + (s.orders || 0), 0));
+  const datasets = SOURCE_META
+    .map(([key, name, color]) => ({
+      label: name, backgroundColor: color + 'dd', borderColor: color, borderWidth: 1,
+      data: rows.map((r, i) => {
+        const v = (r.src[key] || {})[field] || 0;
+        return metric === 'share' ? (totals[i] ? v / totals[i] * 100 : 0) : v;
+      }),
+    }))
+    .filter(ds => ds.data.some(v => v > 0));
+
+  const fmt = v => metric === 'revenue' ? fc(v) : metric === 'share' ? v.toFixed(0) + '%' : String(v);
+  mk('chartSources', 'bar', { labels, datasets }, {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: { callbacks: { label: c => c.parsed.y ? ` ${c.dataset.label}: ${fmt(c.parsed.y)}` : null } },
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
+      y: { stacked: true, max: metric === 'share' ? 100 : undefined,
+           ticks: { color: '#64748b', font: { size: 10 }, callback: v => metric === 'revenue' ? shortCurrency(v) : metric === 'share' ? v + '%' : v },
+           grid: { color: '#252d45' } },
+    },
+  });
+}
+document.getElementById('srcMetric')?.addEventListener('change', () => renderSourceChart(lastSourceMonths));
+
 function renderCharts(months, newRet) {
   if (!months.length) {
     Object.keys(charts).forEach(id => {
@@ -1209,6 +1286,8 @@ function renderCharts(months, newRet) {
       borderWidth:1.5, borderRadius:6,
     }]
   }, baseOpts(v => shortCurrency(v), c => ' '+fc(c.parsed.y)+'/day'));
+
+  renderSourceChart(months);
 
   // AOV
   mk('chartAov', 'line', {
