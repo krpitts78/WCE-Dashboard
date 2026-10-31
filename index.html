@@ -747,20 +747,50 @@ let charts   = {};                // Chart.js instances
 const PIN_HASH = '650680dbe341eade2916c144777fe4973f36abe81fd9333b19a877d15f455d42';
 const pinHash = async pin => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('wce-dash:' + pin)))].map(b => b.toString(16).padStart(2, '0')).join('');
 function startApp() { document.body.classList.remove('locked'); loadData(); }
+// Wrong-PIN limit: 4 a day, counted per calendar day. It lives in this browser, so it stops
+// someone guessing at the keypad, not someone who clears site data or scripts the check.
+const MAX_TRIES = 4;
+const dayKey = () => new Date().toLocaleDateString('en-CA');
+let memTries = { day: dayKey(), n: 0 };
+function triesUsed() {
+  let stored = 0;
+  try { const t = JSON.parse(localStorage.getItem('wce_dash_tries') || '{}'); if (t.day === dayKey()) stored = t.n || 0; } catch (e) {}
+  return Math.max(stored, memTries.day === dayKey() ? memTries.n : 0);
+}
+function addTry() {
+  const n = triesUsed() + 1;
+  memTries = { day: dayKey(), n };
+  try { localStorage.setItem('wce_dash_tries', JSON.stringify(memTries)); } catch (e) {}
+  return n;
+}
+function lockUI() {
+  document.getElementById('pinInput').disabled = true;
+  document.querySelector('#pinForm button').disabled = true;
+  document.getElementById('pinErr').textContent = 'Too many wrong attempts. Try again tomorrow.';
+}
 document.addEventListener('DOMContentLoaded', async () => {
   let ok = false;
   try { ok = localStorage.getItem('wce_dash_ok') === PIN_HASH; } catch (e) {}
   if (ok) return startApp();
   const input = document.getElementById('pinInput'), err = document.getElementById('pinErr');
+  if (triesUsed() >= MAX_TRIES) lockUI();
   input.focus();
   document.getElementById('pinForm').addEventListener('submit', async ev => {
     ev.preventDefault();
+    if (triesUsed() >= MAX_TRIES) { lockUI(); return; }
     let h = '';
     try { h = await pinHash(input.value.trim()); } catch (e) { err.textContent = 'This browser cannot check the PIN.'; return; }
     if (h === PIN_HASH) {
-      try { localStorage.setItem('wce_dash_ok', PIN_HASH); } catch (e) {}
+      try { localStorage.setItem('wce_dash_ok', PIN_HASH); localStorage.removeItem('wce_dash_tries'); } catch (e) {}
+      memTries = { day: dayKey(), n: 0 };
       startApp();
-    } else { err.textContent = 'Wrong PIN'; input.value = ''; input.focus(); }
+    } else {
+      const left = MAX_TRIES - addTry();
+      input.value = '';
+      if (left <= 0) { lockUI(); return; }
+      err.textContent = 'Wrong PIN. ' + left + (left === 1 ? ' attempt' : ' attempts') + ' left today.';
+      input.focus();
+    }
   });
 });
 
