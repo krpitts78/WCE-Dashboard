@@ -437,7 +437,7 @@
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Total Gross Profit</div>
       <div class="kpi-val" id="k-profit">—</div>
-      <div class="kpi-sub">after all costs</div>
+      <div class="kpi-sub">before overhead</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--purple)">
       <div class="kpi-label">Avg Gross Margin</div>
@@ -473,7 +473,7 @@
       <div class="cw tall"><canvas id="chartRoas"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-hd"><span class="card-title">Gross Margin %</span><span class="card-tag">after all costs</span></div>
+      <div class="card-hd"><span class="card-title">Gross Margin %</span><span class="card-tag">before overhead</span></div>
       <div class="cw tall"><canvas id="chartMargin"></canvas></div>
     </div>
   </div>
@@ -543,7 +543,7 @@
             <th>Orders</th><th>Revenue</th><th>AOV</th>
             <th>Total COGS</th><th>Google Ads</th><th>Meta Ads</th><th>OpenAI Ads</th>
             <th>Mkt Cost/Order</th><th>ROAS</th><th>Mkt % Rev</th>
-            <th>Cost/Order</th><th>Margin/Order</th>
+            <th>Cost/Order</th><th>Gross Margin/Order</th>
             <th>Gross Margin %</th><th>Gross Profit</th><th>Daily Mkt Cost</th>
           </tr>
         </thead>
@@ -585,16 +585,16 @@
 
   <p class="section-label">By Organization</p>
   <div class="table-card" style="margin-bottom:1rem"><div class="tbl-wrap">
-    <table><thead><tr><th style="text-align:left">Organization</th><th style="text-align:right">Stores</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
+    <table><thead><tr><th style="text-align:left">Organization</th><th style="text-align:right">Stores</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">COGS</th><th style="text-align:right">Gross profit</th><th style="text-align:right">Gross margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
     <tbody id="stOrgBody"></tbody></table>
   </div></div>
 
   <p class="section-label">Every Store</p>
   <div class="table-card"><div class="tbl-wrap">
-    <table><thead><tr><th>Store</th><th style="text-align:left">Organization</th><th style="text-align:left">Payment</th><th style="text-align:left">Active</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
+    <table><thead><tr><th>Store</th><th style="text-align:left">Organization</th><th style="text-align:left">Payment</th><th style="text-align:left">Active</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Gross profit</th><th style="text-align:right">Gross margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
     <tbody id="stBody"></tbody></table>
   </div></div>
-  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are store order totals from the OMS minus the fundraiser contribution, which is passed to the organization and is not revenue (it is shown separately). Tax and shipping on an order are still included. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Margin is Shopify sales (also minus the fundraiser) minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin.</p>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are store order totals from the OMS minus the fundraiser contribution, which is passed to the organization and is not revenue (it is shown separately). Tax and shipping on an order are still included. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Gross profit is Shopify sales (also minus the fundraiser) minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin. COGS is only the cost of the products and the decorating, so gross profit and gross margin are before payroll, insurance, rent, utilities and other overhead.</p>
   </div>
 </div>
 
@@ -623,10 +623,10 @@
 
   <p class="section-label">Monthly Breakdown</p>
   <div class="table-card"><div class="tbl-wrap">
-    <table><thead><tr><th>Month</th><th style="text-align:right">Orders</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">% of all sales</th></tr></thead>
+    <table><thead><tr><th>Month</th><th style="text-align:right">Orders</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Gross profit</th><th style="text-align:right">Gross margin</th><th style="text-align:right">% of all sales</th></tr></thead>
     <tbody id="ofBody"></tbody></table>
   </div></div>
-  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Orders from customers tagged Offline_Customer (phone, walk-in, LSA and similar). Pop-up store orders are on their own tab and left out here. Sales and COGS come from Shopify; margin is sales minus COGS only, with no ad spend, shipping or labour, and a few orders have no cost recorded yet, which flatters it slightly. Offline orders only went into Shopify in August 2026; before that they were in Printavo. Months marked * are a partial picture (just what was imported or entered early), so they are shown greyed out and left out of the totals and the share figure.</p>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Orders from customers tagged Offline_Customer (phone, walk-in, LSA and similar). Pop-up store orders are on their own tab and left out here. Sales and COGS come from Shopify; gross profit is sales minus COGS only (the cost of the products and the decorating). It is before ad spend, shipping, payroll, insurance, rent, utilities and other overhead, and a few orders have no cost recorded yet, which flatters it slightly. Offline orders only went into Shopify in August 2026; before that they were in Printavo. Months marked * are a partial picture (just what was imported or entered early), so they are shown greyed out and left out of the totals and the share figure.</p>
   </div>
 </div>
 
