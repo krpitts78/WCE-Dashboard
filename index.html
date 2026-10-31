@@ -137,6 +137,19 @@
     }
     @media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr) !important; } }
     @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+    .kpi-6 { grid-template-columns: repeat(6, 1fr); }
+
+    /* ── PIN gate ─────────────────────────────────────────── */
+    body.locked > *:not(#pinGate) { display: none !important; }
+    #pinGate { display: none; }
+    body.locked #pinGate { display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 1rem; background: var(--bg, #0b1020); }
+    #pinForm { display: flex; flex-direction: column; align-items: center; gap: .8rem; width: 100%; max-width: 280px; }
+    #pinForm img { height: 44px; margin-bottom: .5rem; }
+    #pinForm p { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+    #pinInput { width: 100%; text-align: center; font-size: 1.6rem; letter-spacing: .5em; padding: .6rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); outline: none; }
+    #pinInput:focus { border-color: var(--blue); }
+    #pinForm button { width: 100%; padding: .65rem; border-radius: 10px; border: 0; background: var(--blue); color: #fff; font-size: .9rem; font-weight: 700; cursor: pointer; }
+    #pinErr { color: var(--red); font-size: .78rem; min-height: 1em; }
 
     .kpi {
       background: var(--surface); border: 1px solid var(--border);
@@ -205,7 +218,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--r); padding: 1.2rem;
     }
-    .card-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .card-hd { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
     .card-title { font-size: .85rem; font-weight: 700; }
     .card-tag {
       font-size: .63rem; font-weight: 700; text-transform: uppercase;
@@ -289,7 +302,8 @@
     .tab-content.active { display: block; }
   </style>
 </head>
-<body>
+<body class="locked">
+<div id="pinGate"><form id="pinForm" autocomplete="off"><img src="https://cdn.shopify.com/s/files/1/0716/7980/3665/files/Wholesale_Caps_Logo.png?v=1742557531" alt="" /><p>Enter PIN</p><input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="PIN" /><button type="submit">Unlock</button><span id="pinErr"></span></form></div>
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────────
@@ -543,9 +557,9 @@
 
 <!-- ══════ STORES TAB ══════ -->
 <div class="tab-content" id="tab-stores">
-  <div style="padding:1rem 1.5rem 0">
+  <div class="main">
   <p class="section-label">Pop-up Stores</p>
-  <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr) !important;">
+  <div class="kpi-grid kpi-6">
     <div class="kpi" style="--kpi-c:var(--blue)"><div class="kpi-label">Stores</div><div class="kpi-val" id="st-stores">—</div><div class="kpi-sub" id="st-stores-sub"></div></div>
     <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Store Sales</div><div class="kpi-val" id="st-rev">—</div><div class="kpi-sub">excludes fundraiser money</div></div>
     <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">Orders</div><div class="kpi-val" id="st-orders">—</div><div class="kpi-sub" id="st-aov"></div></div>
@@ -728,7 +742,27 @@ let charts   = {};                // Chart.js instances
 /* ══════════════════════════════════════════════════
    LOAD & PARSE
 ══════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', loadData);
+// A light door, not a vault: the PIN keeps the page from casual visitors. The numbers
+// themselves are static files on a public site, so this is not real access control.
+const PIN_HASH = '650680dbe341eade2916c144777fe4973f36abe81fd9333b19a877d15f455d42';
+const pinHash = async pin => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('wce-dash:' + pin)))].map(b => b.toString(16).padStart(2, '0')).join('');
+function startApp() { document.body.classList.remove('locked'); loadData(); }
+document.addEventListener('DOMContentLoaded', async () => {
+  let ok = false;
+  try { ok = localStorage.getItem('wce_dash_ok') === PIN_HASH; } catch (e) {}
+  if (ok) return startApp();
+  const input = document.getElementById('pinInput'), err = document.getElementById('pinErr');
+  input.focus();
+  document.getElementById('pinForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    let h = '';
+    try { h = await pinHash(input.value.trim()); } catch (e) { err.textContent = 'This browser cannot check the PIN.'; return; }
+    if (h === PIN_HASH) {
+      try { localStorage.setItem('wce_dash_ok', PIN_HASH); } catch (e) {}
+      startApp();
+    } else { err.textContent = 'Wrong PIN'; input.value = ''; input.focus(); }
+  });
+});
 
 async function loadData() {
   showOverlay('loading', true);
