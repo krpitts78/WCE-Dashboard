@@ -505,7 +505,7 @@
           <tr>
             <th style="text-align:left">Month</th>
             <th>Orders</th><th>Revenue</th><th>AOV</th>
-            <th>Total COGS</th><th>Google Ads</th><th>Meta Ads</th>
+            <th>Total COGS</th><th>Google Ads</th><th>Meta Ads</th><th>OpenAI Ads</th>
             <th>Mkt Cost/Order</th><th>ROAS</th><th>Mkt % Rev</th>
             <th>Cost/Order</th><th>Margin/Order</th>
             <th>Gross Margin %</th><th>Gross Profit</th><th>Daily Mkt Cost</th>
@@ -1230,7 +1230,7 @@ function renderTable(months) {
   tbody.innerHTML = '';
 
   if (!months.length) {
-    tbody.innerHTML = `<tr><td class="no-data" colspan="15">No data for the selected period.</td></tr>`;
+    tbody.innerHTML = `<tr><td class="no-data" colspan="16">No data for the selected period.</td></tr>`;
     return;
   }
 
@@ -1238,6 +1238,7 @@ function renderTable(months) {
   const k = computeKPIs(months);
   const totalGoogle = months.reduce((s,m)=>s+(pv(m.googleAds)||0),0);
   const totalMeta   = months.reduce((s,m)=>s+(pv(m.metaAds)||0),0);
+  const totalOpenAi = months.reduce((s,m)=>s+(pv(m.openAiAds)||0),0);
 
   for (const row of months) {
     const profit = pv(row.grossProfit);
@@ -1245,7 +1246,7 @@ function renderTable(months) {
     const roas   = pv(row.roas);
     tbody.appendChild(makeRow(
       row.month, row.orders, row.revenue, row.aov, row.cogs,
-      row.googleAds, row.metaAds, row.mktPerOrder, row.roas, row.mktPctRev,
+      row.googleAds, row.metaAds, row.openAiAds, row.mktPerOrder, row.roas, row.mktPctRev,
       row.costPerOrder, row.marginPerOrder, row.grossMarginPct, row.grossProfit, row.dailyMktCost,
       false, profit, margin, roas
     ));
@@ -1259,7 +1260,7 @@ function renderTable(months) {
       'Total / Avg',
       fn(k.totalOrders), fc(k.totalRevenue), fc(k.aov,2),
       '—',
-      fc(totalGoogle), totalMeta>0?fc(totalMeta):'—',
+      fc(totalGoogle), totalMeta>0?fc(totalMeta):'—', totalOpenAi>0?fc(totalOpenAi):'—',
       '—', avgRoasStr, k.avgMktPct.toFixed(1)+'%',
       '—','—', avgMrgStr, fc(k.totalProfit),
       '—',
@@ -1268,7 +1269,7 @@ function renderTable(months) {
   }
 }
 
-function makeRow(month, orders, revenue, aov, cogs, google, meta, mktPerOrder, roas, mktPctRev, costPerOrder, marginPerOrder, grossMarginPct, grossProfit, dailyMktCost, isTotal, profitN, marginN, roasN) {
+function makeRow(month, orders, revenue, aov, cogs, google, meta, openAi, mktPerOrder, roas, mktPctRev, costPerOrder, marginPerOrder, grossMarginPct, grossProfit, dailyMktCost, isTotal, profitN, marginN, roasN) {
   const tr = document.createElement('tr');
   if (isTotal) tr.className = 'total-row';
   const roasCls = roasN==null?'neu': roasN>=3?'pos': roasN>=2?'neu':'neg';
@@ -1277,7 +1278,7 @@ function makeRow(month, orders, revenue, aov, cogs, google, meta, mktPerOrder, r
   tr.innerHTML = `
     <td>${month}</td>
     <td>${orders||'—'}</td><td>${revenue||'—'}</td><td>${aov||'—'}</td>
-    <td>${cogs||'—'}</td><td>${google||'—'}</td><td>${meta||'—'}</td>
+    <td>${cogs||'—'}</td><td>${google||'—'}</td><td>${meta||'—'}</td><td>${openAi||'—'}</td>
     <td>${mktPerOrder||'—'}</td>
     <td class="${roasCls}">${roas||'—'}</td>
     <td>${mktPctRev||'—'}</td>
