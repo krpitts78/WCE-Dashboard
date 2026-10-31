@@ -545,19 +545,21 @@
 <div class="tab-content" id="tab-stores">
   <div style="padding:1rem 1.5rem 0">
   <p class="section-label">Pop-up Stores</p>
-  <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr) !important;">
+  <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr) !important;">
     <div class="kpi" style="--kpi-c:var(--blue)"><div class="kpi-label">Stores</div><div class="kpi-val" id="st-stores">—</div><div class="kpi-sub" id="st-stores-sub"></div></div>
     <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Store Sales</div><div class="kpi-val" id="st-rev">—</div><div class="kpi-sub">all non-cancelled orders</div></div>
     <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">Orders</div><div class="kpi-val" id="st-orders">—</div><div class="kpi-sub" id="st-aov"></div></div>
+    <div class="kpi" style="--kpi-c:var(--red)"><div class="kpi-label">Store COGS</div><div class="kpi-val" id="st-cogs">—</div><div class="kpi-sub" id="st-cogs-sub"></div></div>
+    <div class="kpi" style="--kpi-c:var(--green)"><div class="kpi-label">Gross Margin</div><div class="kpi-val" id="st-margin">—</div><div class="kpi-sub" id="st-profit-sub"></div></div>
     <div class="kpi" style="--kpi-c:var(--amber)"><div class="kpi-label">Units</div><div class="kpi-val" id="st-units">—</div><div class="kpi-sub" id="st-upo"></div></div>
-    <div class="kpi" style="--kpi-c:var(--red)"><div class="kpi-label">Fundraiser Raised</div><div class="kpi-val" id="st-fund">—</div><div class="kpi-sub">paid out to organizations</div></div>
+    <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">Fundraiser Raised</div><div class="kpi-val" id="st-fund">—</div><div class="kpi-sub">paid out to organizations</div></div>
   </div>
 
   <div class="card" style="margin-bottom:1rem">
     <div class="card-hd">
       <span class="card-title">Store Sales by Month</span>
       <select id="stMetric" style="background:#1a2035;color:#94a3b8;border:1px solid #252d45;border-radius:6px;padding:2px 6px;font-size:11px">
-        <option value="total">Sales</option>
+        <option value="total">Sales</option><option value="profit">Gross profit</option><option value="cogs">COGS</option>
         <option value="orders">Orders</option>
         <option value="units">Units</option>
         <option value="fundraiser">Fundraiser</option>
@@ -568,16 +570,16 @@
 
   <p class="section-label">By Organization</p>
   <div class="table-card" style="margin-bottom:1rem"><div class="tbl-wrap">
-    <table><thead><tr><th style="text-align:left">Organization</th><th style="text-align:right">Stores</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Fundraiser</th></tr></thead>
+    <table><thead><tr><th style="text-align:left">Organization</th><th style="text-align:right">Stores</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
     <tbody id="stOrgBody"></tbody></table>
   </div></div>
 
   <p class="section-label">Every Store</p>
   <div class="table-card"><div class="tbl-wrap">
-    <table><thead><tr><th>Store</th><th style="text-align:left">Organization</th><th style="text-align:left">Payment</th><th style="text-align:left">Active</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">Fundraiser</th></tr></thead>
+    <table><thead><tr><th>Store</th><th style="text-align:left">Organization</th><th style="text-align:left">Payment</th><th style="text-align:left">Active</th><th style="text-align:right">Orders</th><th style="text-align:right">Units</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">Fundraiser</th></tr></thead>
     <tbody id="stBody"></tbody></table>
   </div></div>
-  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are the store order totals from the OMS. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. Production costs are not tracked per store, so there is no margin here.</p>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Sales are the store order totals from the OMS. Pay-later stores (company stores) are included when placed, whether or not they are invoiced yet. COGS comes from Shopify (store orders carry a store: tag). Margin is Shopify sales minus COGS and covers only stores that have it: pay-later stores such as NCS are invoiced separately, so they show a dash and are left out of the margin.</p>
   </div>
 </div>
 
@@ -1513,55 +1515,64 @@ const mLabel = k => { const [y, m] = k.split('-').map(Number); return `${MONTH_S
 function renderStores() {
   const rows = (D && D.live && D.live.stores) || [];
   const body = document.getElementById('stBody');
-  if (!rows.length) { body.innerHTML = '<tr><td class="no-data" colspan="9">No store data yet.</td></tr>'; return; }
+  if (!rows.length) { body.innerHTML = '<tr><td class="no-data" colspan="12">No store data yet.</td></tr>'; return; }
 
   // One record per store.
   const byStore = {};
   for (const r of rows) {
-    const s = (byStore[r.slug] ||= { name: r.name, org: r.org, status: r.status, mode: r.payment_mode, orders: 0, units: 0, total: 0, fundraiser: 0, first: r.month, last: r.month });
+    const s = (byStore[r.slug] ||= { name: r.name, org: r.org, status: r.status, mode: r.payment_mode, orders: 0, units: 0, total: 0, fundraiser: 0, cogs: 0, cogsSales: 0, hasCogs: false, first: r.month, last: r.month });
     s.orders += r.orders; s.units += r.units; s.total += r.total; s.fundraiser += r.fundraiser;
+    if (r.cogs != null) { s.cogs += r.cogs; s.cogsSales += r.cogsSales; s.hasCogs = true; }
     if (r.month < s.first) s.first = r.month;
     if (r.month > s.last) s.last = r.month;
   }
   const stores = Object.values(byStore).sort((a, b) => b.last.localeCompare(a.last) || b.total - a.total);
   const sum = k => stores.reduce((a, s) => a + s[k], 0);
-  const T = { orders: sum('orders'), units: sum('units'), total: sum('total'), fundraiser: sum('fundraiser') };
+  const T = { orders: sum('orders'), units: sum('units'), total: sum('total'), fundraiser: sum('fundraiser'), cogs: sum('cogs'), cogsSales: sum('cogsSales') };
+  const profitOf = o => o.cogsSales - o.cogs, marginOf = o => o.cogsSales ? profitOf(o) / o.cogsSales * 100 : null;
+  const covered = stores.filter(s => s.hasCogs).length;
 
   document.getElementById('st-stores').textContent = stores.length;
   document.getElementById('st-stores-sub').textContent = 'with orders';
   document.getElementById('st-rev').textContent = fc(T.total);
   document.getElementById('st-orders').textContent = fn(T.orders);
   document.getElementById('st-aov').textContent = fc(T.orders ? T.total / T.orders : 0, 2) + ' avg order';
+  document.getElementById('st-cogs').textContent = fc(T.cogs);
+  document.getElementById('st-cogs-sub').textContent = covered + ' of ' + stores.length + ' stores';
+  document.getElementById('st-margin').textContent = marginOf(T) == null ? '—' : marginOf(T).toFixed(1) + '%';
+  document.getElementById('st-profit-sub').textContent = fc(profitOf(T)) + ' gross profit';
   document.getElementById('st-units').textContent = fn(T.units);
   document.getElementById('st-upo').textContent = (T.orders ? T.units / T.orders : 0).toFixed(1) + ' per order';
   document.getElementById('st-fund').textContent = fc(T.fundraiser);
 
   const R = 'style="text-align:right"', L = 'style="text-align:left"';
+  const cogsCells = o => (o.hasCogs === false ? '<td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">—</td>' : `<td style="text-align:right">${fc(o.cogs, 2)}</td><td style="text-align:right">${fc(profitOf(o), 2)}</td><td style="text-align:right">${marginOf(o).toFixed(1)}%</td>`);
   const modeTxt = m => m === 'pay_later' ? 'Pay later' : 'Pay now';
   const statusTxt = s => ({ active: 'Active', force_open: 'Open', closed: 'Closed' }[s] || s);
   const span = s => s.first === s.last ? mLabel(s.first) : `${mLabel(s.first)} – ${mLabel(s.last)}`;
   body.innerHTML = stores.map(s => `<tr><td>${esc(s.name)}</td><td ${L}>${esc(s.org)}</td><td ${L}>${modeTxt(s.mode)}</td><td ${L}>${span(s)}</td>` +
-    `<td ${R}>${fn(s.orders)}</td><td ${R}>${fn(s.units)}</td><td ${R}>${fc(s.total, 2)}</td><td ${R}>${fc(s.orders ? s.total / s.orders : 0, 2)}</td><td ${R}>${s.fundraiser ? fc(s.fundraiser, 2) : '—'}</td></tr>`).join('') +
-    `<tr class="total-row"><td>Total</td><td></td><td></td><td></td><td ${R}>${fn(T.orders)}</td><td ${R}>${fn(T.units)}</td><td ${R}>${fc(T.total, 2)}</td><td ${R}>${fc(T.orders ? T.total / T.orders : 0, 2)}</td><td ${R}>${fc(T.fundraiser, 2)}</td></tr>`;
+    `<td ${R}>${fn(s.orders)}</td><td ${R}>${fn(s.units)}</td><td ${R}>${fc(s.total, 2)}</td><td ${R}>${fc(s.orders ? s.total / s.orders : 0, 2)}</td>${cogsCells(s)}<td ${R}>${s.fundraiser ? fc(s.fundraiser, 2) : '—'}</td></tr>`).join('') +
+    `<tr class="total-row"><td>Total</td><td></td><td></td><td></td><td ${R}>${fn(T.orders)}</td><td ${R}>${fn(T.units)}</td><td ${R}>${fc(T.total, 2)}</td><td ${R}>${fc(T.orders ? T.total / T.orders : 0, 2)}</td>${cogsCells(T)}<td ${R}>${fc(T.fundraiser, 2)}</td></tr>`;
 
   // By organization.
   const orgs = {};
   for (const s of stores) {
-    const o = (orgs[s.org || '—'] ||= { stores: 0, orders: 0, units: 0, total: 0, fundraiser: 0 });
+    const o = (orgs[s.org || '—'] ||= { stores: 0, orders: 0, units: 0, total: 0, fundraiser: 0, cogs: 0, cogsSales: 0, hasCogs: false });
     o.stores++; o.orders += s.orders; o.units += s.units; o.total += s.total; o.fundraiser += s.fundraiser;
+    if (s.hasCogs) { o.cogs += s.cogs; o.cogsSales += s.cogsSales; o.hasCogs = true; }
   }
   const orgList = Object.entries(orgs).sort((a, b) => b[1].total - a[1].total);
   document.getElementById('stOrgBody').innerHTML = orgList.map(([n, o]) =>
-    `<tr><td ${L}>${esc(n)}</td><td ${R}>${o.stores}</td><td ${R}>${fn(o.orders)}</td><td ${R}>${fn(o.units)}</td><td ${R}>${fc(o.total, 2)}</td><td ${R}>${o.fundraiser ? fc(o.fundraiser, 2) : '—'}</td></tr>`).join('');
+    `<tr><td ${L}>${esc(n)}</td><td ${R}>${o.stores}</td><td ${R}>${fn(o.orders)}</td><td ${R}>${fn(o.units)}</td><td ${R}>${fc(o.total, 2)}</td>${cogsCells(o)}<td ${R}>${o.fundraiser ? fc(o.fundraiser, 2) : '—'}</td></tr>`).join('');
 
   // Monthly chart, stacked by organization.
   const metric = document.getElementById('stMetric').value;
   const monthKeys = [...new Set(rows.map(r => r.month))].sort();
   const datasets = orgList.map(([n], i) => ({
     label: n, backgroundColor: ORG_COLORS[i % ORG_COLORS.length] + 'dd', borderColor: ORG_COLORS[i % ORG_COLORS.length], borderWidth: 1,
-    data: monthKeys.map(m => rows.filter(r => r.month === m && (r.org || '—') === n).reduce((a, r) => a + r[metric], 0)),
+    data: monthKeys.map(m => rows.filter(r => r.month === m && (r.org || '—') === n).reduce((a, r) => a + (metric === 'profit' ? (r.cogs == null ? 0 : r.cogsSales - r.cogs) : (r[metric] || 0)), 0)),
   }));
-  const money = metric === 'total' || metric === 'fundraiser';
+  const money = metric !== 'orders' && metric !== 'units';
   mk('chartStores', 'bar', { labels: monthKeys.map(mLabel), datasets }, {
     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
     plugins: {

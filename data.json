@@ -527,7 +527,9 @@
       "orders": 19,
       "units": 40,
       "total": 814.94,
-      "fundraiser": 200
+      "fundraiser": 200,
+      "cogs": 164.26,
+      "cogsSales": 814.94
     },
     {
       "slug": "dpdh-pink-out",
@@ -539,7 +541,9 @@
       "orders": 8,
       "units": 11,
       "total": 231.98,
-      "fundraiser": 55
+      "fundraiser": 55,
+      "cogs": 50,
+      "cogsSales": 231.98
     },
     {
       "slug": "faithfulfridayshirts",
@@ -551,7 +555,9 @@
       "orders": 121,
       "units": 198,
       "total": 4949.74,
-      "fundraiser": 990
+      "fundraiser": 990,
+      "cogs": 1793.32,
+      "cogsSales": 4949.74
     },
     {
       "slug": "faithfulfridayshirts",
@@ -563,7 +569,9 @@
       "orders": 115,
       "units": 175,
       "total": 4331.76,
-      "fundraiser": 880
+      "fundraiser": 880,
+      "cogs": 1572.97,
+      "cogsSales": 4331.76
     },
     {
       "slug": "fhs-orlando-shirts",
@@ -575,7 +583,9 @@
       "orders": 23,
       "units": 36,
       "total": 743.81,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 239.77,
+      "cogsSales": 743.81
     },
     {
       "slug": "fwhs-varsity-fan-shirts",
@@ -587,7 +597,9 @@
       "orders": 30,
       "units": 51,
       "total": 1230.68,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 337.62,
+      "cogsSales": 1233.96
     },
     {
       "slug": "fwhs-vb-spirit-store",
@@ -599,7 +611,9 @@
       "orders": 78,
       "units": 211,
       "total": 5962.94,
-      "fundraiser": 1293.9
+      "fundraiser": 1293.9,
+      "cogs": 1470.83,
+      "cogsSales": 5962.94
     },
     {
       "slug": "fwjh-game-day-shirts",
@@ -611,7 +625,9 @@
       "orders": 55,
       "units": 58,
       "total": 1249.23,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 374.44,
+      "cogsSales": 1229.2
     },
     {
       "slug": "houston-centerless",
@@ -623,7 +639,9 @@
       "orders": 6,
       "units": 40,
       "total": 506.69,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": null,
+      "cogsSales": null
     },
     {
       "slug": "lsa-5th-grade-camp-green-lake",
@@ -635,7 +653,9 @@
       "orders": 47,
       "units": 48,
       "total": 841.08,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 181.92,
+      "cogsSales": 841.08
     },
     {
       "slug": "lsa-dig-pink",
@@ -647,7 +667,9 @@
       "orders": 9,
       "units": 12,
       "total": 233.84,
-      "fundraiser": 60
+      "fundraiser": 60,
+      "cogs": 45.66,
+      "cogsSales": 233.84
     },
     {
       "slug": "lsa-dig-pink",
@@ -659,7 +681,9 @@
       "orders": 65,
       "units": 96,
       "total": 1996.42,
-      "fundraiser": 485
+      "fundraiser": 485,
+      "cogs": 418.8,
+      "cogsSales": 1996.42
     },
     {
       "slug": "lsa-dig-pink",
@@ -671,7 +695,9 @@
       "orders": 21,
       "units": 28,
       "total": 556.92,
-      "fundraiser": 140
+      "fundraiser": 140,
+      "cogs": 111.75,
+      "cogsSales": 556.92
     },
     {
       "slug": "lsa-football-playoffs-2026",
@@ -683,7 +709,9 @@
       "orders": 40,
       "units": 84,
       "total": 2184.42,
-      "fundraiser": 420
+      "fundraiser": 420,
+      "cogs": 447.25,
+      "cogsSales": 2184.42
     },
     {
       "slug": "lsa-homecoming",
@@ -695,7 +723,9 @@
       "orders": 19,
       "units": 31,
       "total": 641.21,
-      "fundraiser": 155
+      "fundraiser": 155,
+      "cogs": 135.33,
+      "cogsSales": 641.21
     },
     {
       "slug": "lsa-homecoming",
@@ -707,7 +737,9 @@
       "orders": 39,
       "units": 56,
       "total": 1248.63,
-      "fundraiser": 315
+      "fundraiser": 315,
+      "cogs": 250.59,
+      "cogsSales": 1248.63
     },
     {
       "slug": "lsa-homecoming",
@@ -719,7 +751,9 @@
       "orders": 23,
       "units": 30,
       "total": 585.81,
-      "fundraiser": 150
+      "fundraiser": 150,
+      "cogs": 115.45,
+      "cogsSales": 585.81
     },
     {
       "slug": "lsa-homecoming",
@@ -731,7 +765,9 @@
       "orders": 23,
       "units": 29,
       "total": 540.21,
-      "fundraiser": 145
+      "fundraiser": 145,
+      "cogs": 98.99,
+      "cogsSales": 540.21
     },
     {
       "slug": "lsa-spirit-shirts",
@@ -743,7 +779,9 @@
       "orders": 39,
       "units": 76,
       "total": 1479.99,
-      "fundraiser": 380
+      "fundraiser": 380,
+      "cogs": 312.32,
+      "cogsSales": 1479.99
     },
     {
       "slug": "lsa-spirit-shirts",
@@ -755,7 +793,9 @@
       "orders": 56,
       "units": 103,
       "total": 2002.97,
-      "fundraiser": 515
+      "fundraiser": 515,
+      "cogs": 400.98,
+      "cogsSales": 2002.97
     },
     {
       "slug": "ncs-employee-store",
@@ -767,7 +807,9 @@
       "orders": 45,
       "units": 151,
       "total": 6625.72,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": null,
+      "cogsSales": null
     },
     {
       "slug": "seminoles-flag-playoffs",
@@ -779,7 +821,9 @@
       "orders": 17,
       "units": 30,
       "total": 582.32,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 117.28,
+      "cogsSales": 582.32
     },
     {
       "slug": "seminoles-freshman-playoffs",
@@ -791,7 +835,9 @@
       "orders": 25,
       "units": 67,
       "total": 1371.44,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 265.05,
+      "cogsSales": 1371.44
     },
     {
       "slug": "seminoles-juniors-playoffs",
@@ -803,7 +849,9 @@
       "orders": 27,
       "units": 60,
       "total": 1196.62,
-      "fundraiser": 0
+      "fundraiser": 0,
+      "cogs": 233.47,
+      "cogsSales": 1191.21
     }
   ]
 }

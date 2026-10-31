@@ -18,6 +18,10 @@ eq('daily Windsor rows roll up to the sheet label', m.googleSpend, { 'SH | Hats'
 eq('Google total', m.googleSpendTotal, 827.85);
 eq('OpenAI not started in August', m.openAiSpend, 0);
 eq('new / returning carried through', [m.newCustomers, m.returningCustomers], [65, 24]);
+const st = JSON.parse(fs.readFileSync(out, 'utf8')).stores;
+const ff = st.find((r) => r.slug === 'faithfulfridayshirts' && r.month === '2026-07');
+eq('store COGS joins on the store: tag', [ff.cogs, ff.cogsSales], [1793.32, 4949.74]);
+eq('pay-later store has no COGS, not zero', st.find((r) => r.slug === 'ncs-employee-store').cogs, null);
 // A mistyped row must stop the build, not publish.
 const broken = JSON.parse(fs.readFileSync('scripts/fixture/shopifyql.json','utf8'));
 broken.rows[1][3] = '89120.99';

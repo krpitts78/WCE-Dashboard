@@ -159,10 +159,30 @@ const out = {
 // so it replaces the old copy outright. Absent input keeps whatever is already there.
 const storesIn = read('stores.json', null);
 if (storesIn) {
-  out.stores = storesIn.rows.map((r) => ({
-    slug: String(r.slug), name: String(r.name), org: String(r.org || ''), status: String(r.status), payment_mode: String(r.payment_mode),
-    month: monthKey(r.month), orders: num(r.orders), units: num(r.units), total: round2(num(r.total)), fundraiser: round2(num(r.fundraiser)),
-  }));
+  // Store COGS: Shopify tags each store order `store:<slug>`, so the ShopifyQL groups carrying
+  // that tag give COGS per store per month. `cogsSales` is Shopify's own sales for the same
+  // group, so margin compares like with like (the OMS total can differ by a few dollars).
+  // Pay-later stores (NCS, company stores) are invoiced separately and carry no such tag:
+  // they get cogs = null, never a made-up zero.
+  const cogsBy = {};
+  const sc = read('storecogs.json', { rows: [] });
+  for (const [month, tags, , sales, cogs] of sc.rows) {
+    for (const t of String(tags).split(',')) {
+      const tag = t.trim();
+      if (!tag.toLowerCase().startsWith('store:')) continue;
+      const k = tag.slice(6) + '|' + monthKey(month);
+      const c = (cogsBy[k] ||= { cogs: 0, sales: 0 });
+      c.cogs += num(cogs); c.sales += num(sales);
+    }
+  }
+  out.stores = storesIn.rows.map((r) => {
+    const c = cogsBy[String(r.slug) + '|' + monthKey(r.month)];
+    return {
+      slug: String(r.slug), name: String(r.name), org: String(r.org || ''), status: String(r.status), payment_mode: String(r.payment_mode),
+      month: monthKey(r.month), orders: num(r.orders), units: num(r.units), total: round2(num(r.total)), fundraiser: round2(num(r.fundraiser)),
+      cogs: c ? round2(c.cogs) : null, cogsSales: c ? round2(c.sales) : null,
+    };
+  });
 } else if (existing.stores) {
   out.stores = existing.stores;
 }

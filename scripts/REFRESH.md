@@ -75,6 +75,13 @@ select coalesce(json_agg(r order by r.slug, r.month), '[]'::json) from (
 ```
 Save as `{ "rows": [...] }` → `stores.json`. If it returns no rows, stop and report.
 
+Store COGS → `storecogs.json`. Shopify connector, `run-analytics-query`:
+```
+FROM sales SHOW orders, total_sales, cost_of_goods_sold GROUP BY month, order_tags SINCE 2026-04-01 UNTIL <today> ORDER BY month, orders DESC LIMIT 1000
+```
+Save `{ "rows": <rows exactly as returned> }`. Only groups tagged `store:<slug>` are used; the
+script ignores the rest. If `rowCount` is 1000, stop: it was truncated.
+
 ## 4. Build and publish
 ```
 node scripts/build-data.mjs /tmp/wce-in data.json
