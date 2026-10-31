@@ -626,7 +626,7 @@
     <table><thead><tr><th>Month</th><th style="text-align:right">Orders</th><th style="text-align:right">Sales</th><th style="text-align:right">Avg order</th><th style="text-align:right">COGS</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th><th style="text-align:right">% of all sales</th></tr></thead>
     <tbody id="ofBody"></tbody></table>
   </div></div>
-  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Orders from customers tagged Offline_Customer (phone, walk-in, LSA and similar). Pop-up store orders are on their own tab and left out here. Sales and COGS come from Shopify; margin is sales minus COGS only, with no ad spend, shipping or labour, and a few orders have no cost recorded yet, which flatters it slightly. Tagging began in April 2026, so earlier months show nothing and their offline orders are still inside Online Sales.</p>
+  <p style="color:var(--muted);font-size:.7rem;margin:.8rem 0 1.5rem">Orders from customers tagged Offline_Customer (phone, walk-in, LSA and similar). Pop-up store orders are on their own tab and left out here. Sales and COGS come from Shopify; margin is sales minus COGS only, with no ad spend, shipping or labour, and a few orders have no cost recorded yet, which flatters it slightly. Offline orders only went into Shopify in August 2026; before that they were in Printavo. Months marked * are a partial picture (just what was imported or entered early), so they are shown greyed out and left out of the totals and the share figure.</p>
   </div>
 </div>
 
@@ -1691,6 +1691,9 @@ document.getElementById('stMetric')?.addEventListener('change', renderStores);
 /* ══════════════════════════════════════════════════
    OFFLINE SALES
 ══════════════════════════════════════════════════ */
+// Offline orders only went into Shopify from Aug 2026; before that they lived in Printavo, and the
+// handful that were imported earlier are a partial picture. Those months are shown but kept out of the totals.
+const OFFLINE_COMPLETE_FROM = '2026-08';
 function renderOffline() {
   const rows = ((D && D.live && D.live.offline) || []).slice().sort((a, b) => a.month.localeCompare(b.month));
   const body = document.getElementById('ofBody');
@@ -1703,10 +1706,11 @@ function renderOffline() {
   const marginTxt = (p, s) => s ? (p / s * 100).toFixed(1) + '%' : '—';
   const shareOf = (off, on) => (on != null && off + on) ? (off / (off + on) * 100).toFixed(1) + '%' : '—';
 
-  const T = rows.reduce((a, r) => ({ orders: a.orders + r.orders, sales: a.sales + r.sales, cogs: a.cogs + r.cogs, online: a.online + (onlineBy[r.month] || 0) }), { orders: 0, sales: 0, cogs: 0, online: 0 });
+  const T = rows.filter(r => r.month >= OFFLINE_COMPLETE_FROM).reduce((a, r) => ({ orders: a.orders + r.orders, sales: a.sales + r.sales, cogs: a.cogs + r.cogs, online: a.online + (onlineBy[r.month] || 0) }), { orders: 0, sales: 0, cogs: 0, online: 0 });
   const profit = T.sales - T.cogs;
   document.getElementById('of-rev').textContent = fc(T.sales);
-  document.getElementById('of-span').textContent = mLabel(rows[0].month) + ' – ' + mLabel(rows[rows.length - 1].month);
+  const full = rows.filter(r => r.month >= OFFLINE_COMPLETE_FROM);
+  document.getElementById('of-span').textContent = full.length ? mLabel(full[0].month) + ' – ' + mLabel(full[full.length - 1].month) : '';
   document.getElementById('of-orders').textContent = fn(T.orders);
   document.getElementById('of-aov').textContent = fc(T.orders ? T.sales / T.orders : 0, 2);
   document.getElementById('of-cogs').textContent = fc(T.cogs);
@@ -1716,14 +1720,15 @@ function renderOffline() {
 
   body.innerHTML = rows.slice().reverse().map(r => {
     const p = r.sales - r.cogs;
-    return `<tr><td>${mLabel(r.month)}</td><td ${R}>${fn(r.orders)}</td><td ${R}>${fc(r.sales, 2)}</td><td ${R}>${fc(r.orders ? r.sales / r.orders : 0, 2)}</td><td ${R}>${fc(r.cogs, 2)}</td><td ${R}>${fc(p, 2)}</td><td ${R}>${marginTxt(p, r.sales)}</td><td ${R}>${shareOf(r.sales, onlineBy[r.month])}</td></tr>`;
-  }).join('') + `<tr class="total-row"><td>Total</td><td ${R}>${fn(T.orders)}</td><td ${R}>${fc(T.sales, 2)}</td><td ${R}>${fc(T.orders ? T.sales / T.orders : 0, 2)}</td><td ${R}>${fc(T.cogs, 2)}</td><td ${R}>${fc(profit, 2)}</td><td ${R}>${marginTxt(profit, T.sales)}</td><td ${R}>${shareOf(T.sales, T.online)}</td></tr>`;
+    const part = r.month < OFFLINE_COMPLETE_FROM;
+    return `<tr${part ? ' style="opacity:.55"' : ''}><td>${mLabel(r.month)}${part ? ' *' : ''}</td><td ${R}>${fn(r.orders)}</td><td ${R}>${fc(r.sales, 2)}</td><td ${R}>${fc(r.orders ? r.sales / r.orders : 0, 2)}</td><td ${R}>${fc(r.cogs, 2)}</td><td ${R}>${fc(p, 2)}</td><td ${R}>${marginTxt(p, r.sales)}</td><td ${R}>${shareOf(r.sales, onlineBy[r.month])}</td></tr>`;
+  }).join('') + `<tr class="total-row"><td>Total (Aug 26 on)</td><td ${R}>${fn(T.orders)}</td><td ${R}>${fc(T.sales, 2)}</td><td ${R}>${fc(T.orders ? T.sales / T.orders : 0, 2)}</td><td ${R}>${fc(T.cogs, 2)}</td><td ${R}>${fc(profit, 2)}</td><td ${R}>${marginTxt(profit, T.sales)}</td><td ${R}>${shareOf(T.sales, T.online)}</td></tr>`;
 
   const metric = document.getElementById('ofMetric').value;
   const val = r => metric === 'orders' ? r.orders : metric === 'profit' ? r.sales - r.cogs : r.sales;
   mk('chartOffline', 'bar', {
     labels: rows.map(r => mLabel(r.month)),
-    datasets: [{ data: rows.map(val), backgroundColor: GREEN + 'aa', borderColor: GREEN, borderWidth: 1.5, borderRadius: 6 }],
+    datasets: [{ data: rows.map(val), backgroundColor: rows.map(r => r.month < OFFLINE_COMPLETE_FROM ? '#64748b55' : GREEN + 'aa'), borderColor: rows.map(r => r.month < OFFLINE_COMPLETE_FROM ? '#64748b' : GREEN), borderWidth: 1.5, borderRadius: 6 }],
   }, baseOpts(v => metric === 'orders' ? v : shortCurrency(v), c => ' ' + (metric === 'orders' ? c.parsed.y + ' orders' : fc(c.parsed.y))));
 }
 document.getElementById('ofMetric')?.addEventListener('change', renderOffline);
