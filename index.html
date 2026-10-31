@@ -512,6 +512,7 @@
       </select>
       </span>
     </div>
+    <div id="srcChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 .6rem"></div>
     <div class="cw tall"><canvas id="chartSources"></canvas></div>
   </div>
 
@@ -1114,6 +1115,8 @@ const SOURCE_META = [
   ['no_data',         'No Data',        '#334155'],
 ];
 let lastSourceMonths = [];
+let hiddenSources = new Set();
+try { hiddenSources = new Set(JSON.parse(localStorage.getItem('wce_hidden_sources') || '[]')); } catch (e) {}
 
 function renderSourceChart(months) {
   lastSourceMonths = months;
@@ -1134,7 +1137,27 @@ function renderSourceChart(months) {
   const isLine = (document.getElementById('srcType') || {}).value === 'line';
   const field = metric === 'revenue' ? 'revenue' : 'orders';
   const totals = rows.map(r => Object.values(r.src).reduce((a, s) => a + (s.orders || 0), 0));
+  const present = SOURCE_META.filter(([key]) => rows.some(r => (r.src[key] || {}).orders > 0));
+  const chips = document.getElementById('srcChips');
+  if (chips) {
+    chips.innerHTML = '';
+    for (const [key, name, color] of present) {
+      const off = hiddenSources.has(key);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = name;
+      b.style.cssText = `cursor:pointer;font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid ${color};` +
+        (off ? 'background:transparent;color:#64748b;text-decoration:line-through;opacity:.6' : `background:${color}33;color:#e2e8f0`);
+      b.onclick = () => {
+        if (hiddenSources.has(key)) hiddenSources.delete(key); else hiddenSources.add(key);
+        try { localStorage.setItem('wce_hidden_sources', JSON.stringify([...hiddenSources])); } catch (e) {}
+        renderSourceChart(lastSourceMonths);
+      };
+      chips.appendChild(b);
+    }
+  }
   const datasets = SOURCE_META
+    .filter(([key]) => !hiddenSources.has(key))
     .map(([key, name, color]) => ({
       label: name, backgroundColor: isLine ? color : color + 'dd', borderColor: color, borderWidth: isLine ? 2 : 1,
       ...(isLine ? { tension: 0.3, pointRadius: 3, fill: false } : {}),
@@ -1150,8 +1173,8 @@ function renderSourceChart(months) {
     responsive: true, maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend: { display: true, position: 'bottom', labels: { color: '#64748b', boxWidth: 10, padding: 10, font: { size: 10 } } },
-      tooltip: { callbacks: { label: c => c.parsed.y ? ` ${c.dataset.label}: ${fmt(c.parsed.y)}` : null } },
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => c.parsed.y ?` ${c.dataset.label}: ${fmt(c.parsed.y)}` : null } },
     },
     scales: {
       x: { stacked: !isLine, ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#252d45' } },
