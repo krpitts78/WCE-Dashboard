@@ -59,6 +59,22 @@ current month). Windsor returns `month` as just `"08"`, so you add the year
 yourself. Save `{ "rows": [ { "month": "2026-08", "campaign": "<as returned>", "spend": <number> }, ... ] }`.
 If any month returns no rows, stop and report: do not publish a month with no spend.
 
+## 3b. Pop-up stores → `stores.json`
+Supabase connector, same project, `execute_sql`. Full history every run (no month filter):
+```sql
+select coalesce(json_agg(r order by r.slug, r.month), '[]'::json) from (
+  select s.slug, s.name, s.org_name as org, s.status, s.payment_mode,
+         to_char(o.created_at at time zone 'America/Chicago','YYYY-MM') as month,
+         count(*) as orders,
+         coalesce(sum((select sum(i.quantity) from store_order_items i where i.store_order_id=o.id)),0) as units,
+         round(sum(coalesce(o.total,0)),2) as total,
+         round(sum(coalesce(o.fundraiser_amount,0)),2) as fundraiser
+  from store_orders o join stores s on s.id=o.store_id
+  where o.status <> 'cancelled'
+  group by 1,2,3,4,5,6) r;
+```
+Save as `{ "rows": [...] }` → `stores.json`. If it returns no rows, stop and report.
+
 ## 4. Build and publish
 ```
 node scripts/build-data.mjs /tmp/wce-in data.json

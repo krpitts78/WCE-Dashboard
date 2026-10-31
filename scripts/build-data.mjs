@@ -155,6 +155,17 @@ const out = {
   note: 'Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.',
   months: { ...(existing.months || {}), ...months },
 };
+// Pop-up stores: one row per store per month, full history each run (it is small),
+// so it replaces the old copy outright. Absent input keeps whatever is already there.
+const storesIn = read('stores.json', null);
+if (storesIn) {
+  out.stores = storesIn.rows.map((r) => ({
+    slug: String(r.slug), name: String(r.name), org: String(r.org || ''), status: String(r.status), payment_mode: String(r.payment_mode),
+    month: monthKey(r.month), orders: num(r.orders), units: num(r.units), total: round2(num(r.total)), fundraiser: round2(num(r.fundraiser)),
+  }));
+} else if (existing.stores) {
+  out.stores = existing.stores;
+}
 out.months = Object.fromEntries(Object.entries(out.months).sort(([a], [b]) => a.localeCompare(b)));
 fs.writeFileSync(outFile, JSON.stringify(out, null, 2) + '\n');
 console.log(`wrote ${outFile}: ${Object.keys(months).join(', ')}`);
