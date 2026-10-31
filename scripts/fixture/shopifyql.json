@@ -1,15 +1,1 @@
-{"rows":[
-["2026-08-01","store:faithfulfridayshirts,Synced to QuickBooks (MyWorks)","114","4304.57","1562.9"],
-["2026-08-01","shipped-closed,Synced to QuickBooks (MyWorks)","83","89120.09","45543.81"],
-["2026-08-01","store:lsa-dig-pink,Synced to QuickBooks (MyWorks)","64","1957.18","411.06"],
-["2026-08-01","store:lsa-spirit-shirts,Synced to QuickBooks (MyWorks)","56","1963.73","393.24"],
-["2026-08-01","store:fwjh-game-day-shirts,Synced to QuickBooks (MyWorks)","55","1229.2","374.44"],
-["2026-08-01","store:lsa-homecoming,Synced to QuickBooks (MyWorks)","38","1209.39","242.85"],
-["2026-08-01","store:fhs-orlando-shirts,Synced to QuickBooks (MyWorks)","22","682.1","219.91"],
-["2026-08-01","In OMS,Synced to QuickBooks (MyWorks)","6","2826.03","1193.64"],
-["2026-08-01","shipped-closed","4","3603.04","1943.87"],
-["2026-08-01","initial-mockup-approved,Synced to QuickBooks (MyWorks)","1","0","11.78"],
-["2026-08-01","In OMS","1","0",""],
-["2026-08-01","shipped-closed,Synced to QuickBooks (MyWorks),In OMS","1","393","151.2"],
-["2026-08-01","Missing Setup Fee,In OMS,Synced to QuickBooks (MyWorks)","0","-124.38","-50.6"]
-]}
+{"rows":[["2026-08-01","store:faithfulfridayshirts,Synced to QuickBooks (MyWorks)","114","4304.57","1562.9"],["2026-08-01","shipped-closed,Synced to QuickBooks (MyWorks)","83","89120.09","45543.81"],["2026-08-01","store:lsa-dig-pink,Synced to QuickBooks (MyWorks)","64","1957.18","411.06"],["2026-08-01","store:lsa-spirit-shirts,Synced to QuickBooks (MyWorks)","56","1963.73","393.24"],["2026-08-01","store:fwjh-game-day-shirts,Synced to QuickBooks (MyWorks)","55","1229.2","374.44"],["2026-08-01","store:lsa-homecoming,Synced to QuickBooks (MyWorks)","38","1209.39","242.85"],["2026-08-01","store:fhs-orlando-shirts,Synced to QuickBooks (MyWorks)","22","682.1","219.91"],["2026-08-01","In OMS,Synced to QuickBooks (MyWorks)","6","2826.03","1193.64"],["2026-08-01","shipped-closed","4","3603.04","1943.87"],["2026-08-01","initial-mockup-approved,Synced to QuickBooks (MyWorks)","1","0","11.78"],["2026-08-01","In OMS","1","0",""],["2026-08-01","shipped-closed,Synced to QuickBooks (MyWorks),In OMS","1","393","151.2"],["2026-08-01","Missing Setup Fee,In OMS,Synced to QuickBooks (MyWorks)","0","-124.38","-50.6"]],"expectTotalSales":"107163.95"}

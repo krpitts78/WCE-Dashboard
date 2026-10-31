@@ -18,5 +18,14 @@ eq('daily Windsor rows roll up to the sheet label', m.googleSpend, { 'SH | Hats'
 eq('Google total', m.googleSpendTotal, 827.85);
 eq('OpenAI not started in August', m.openAiSpend, 0);
 eq('new / returning carried through', [m.newCustomers, m.returningCustomers], [65, 24]);
+// A mistyped row must stop the build, not publish.
+const broken = JSON.parse(fs.readFileSync('scripts/fixture/shopifyql.json','utf8'));
+broken.rows[1][3] = '89120.99';
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bd2-'));
+for (const f of fs.readdirSync('scripts/fixture')) fs.copyFileSync(path.join('scripts/fixture', f), path.join(dir, f));
+fs.writeFileSync(path.join(dir, 'shopifyql.json'), JSON.stringify(broken));
+let stopped = false;
+try { execFileSync('node', ['scripts/build-data.mjs', dir, path.join(dir, 'x.json')], { stdio: 'pipe' }); } catch { stopped = true; }
+eq('a mistyped ShopifyQL row stops the build', stopped, true);
 console.log(bad ? `\n${bad} FAILED` : '\nall passed');
 process.exit(bad ? 1 : 0);

@@ -50,7 +50,16 @@ const m = (k) => (months[k] ||= { orders: 0, revenue: 0, cogs: 0, newCustomers: 
 //    prompt did ("excluded orders from the stores"). Offline customers were
 //    already filtered inside the query. Verified Aug 2026: orders 95, sales
 //    $95,817.78, COGS $48,793.70 — to the cent the same as the sheet.
-for (const [month, tags, orders, sales, cogs] of read('shopifyql.json').rows) {
+const ql = read('shopifyql.json');
+// The agent copies these rows by hand, so the query's own total (summaryMetric)
+// rides along and every row must add back up to it, to within 5 cents.
+if (ql.expectTotalSales !== undefined) {
+  const got = ql.rows.reduce((a, r) => a + num(r[3]), 0);
+  if (Math.abs(got - num(ql.expectTotalSales)) > 0.05) {
+    throw new Error('shopifyql.json rows sum to ' + got.toFixed(2) + ' but the query reported ' + num(ql.expectTotalSales).toFixed(2) + ' — a row was dropped or mistyped');
+  }
+}
+for (const [month, tags, orders, sales, cogs] of ql.rows) {
   if (String(tags).split(',').some((t) => t.trim().toLowerCase().startsWith('store:'))) continue;
   const o = m(monthKey(month));
   o.shopifyqlOrders = (o.shopifyqlOrders || 0) + num(orders);
