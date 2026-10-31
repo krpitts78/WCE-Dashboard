@@ -630,20 +630,6 @@
       "cogsSales": 1229.2
     },
     {
-      "slug": "houston-centerless",
-      "name": "Company Store",
-      "org": "Houston Centerless",
-      "status": "closed",
-      "payment_mode": "pay_later",
-      "month": "2026-04",
-      "orders": 6,
-      "units": 40,
-      "total": 506.69,
-      "fundraiser": 0,
-      "cogs": null,
-      "cogsSales": null
-    },
-    {
       "slug": "lsa-5th-grade-camp-green-lake",
       "name": "5th Grade Camp Green Lake",
       "org": "LSA",

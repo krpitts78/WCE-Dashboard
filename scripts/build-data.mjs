@@ -175,7 +175,9 @@ if (storesIn) {
       c.cogs += num(cogs); c.sales += num(sales);
     }
   }
-  out.stores = storesIn.rows.map((r) => {
+  // Test stores that must never reach the dashboard.
+  const EXCLUDE_STORES = new Set(['houston-centerless']);
+  out.stores = storesIn.rows.filter((r) => !EXCLUDE_STORES.has(String(r.slug))).map((r) => {
     const c = cogsBy[String(r.slug) + '|' + monthKey(r.month)];
     return {
       slug: String(r.slug), name: String(r.name), org: String(r.org || ''), status: String(r.status), payment_mode: String(r.payment_mode),
