@@ -1,0 +1,6 @@
+{
+  "_about": "OpenAI (ChatGPT) ads have no API feed yet. Until there is a real number, each day counts at dailyBudget from startDate and the dashboard marks it 'est.'. To replace an estimate with the real figure, add the month under actuals (e.g. \"2026-10\": 412.37) — actuals always win.",
+  "dailyBudget": 50,
+  "startDate": "2026-10-27",
+  "actuals": {}
+}

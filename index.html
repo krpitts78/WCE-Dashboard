@@ -676,13 +676,95 @@ async function loadData() {
     const text = await res.text();
     const { data: rows } = Papa.parse(text, { header: false, skipEmptyLines: false });
     D = parseSheet(rows);
+    const liveNote = await applyLiveData(D);
     document.getElementById('updatedLabel').textContent =
-      'Updated ' + new Date().toLocaleTimeString();
+      'Updated ' + new Date().toLocaleTimeString() + liveNote;
     renderAll();
   } catch(e) {
     showOverlay('error', true, e.message);
   }
   showOverlay('loading', false);
+}
+
+/* ── Live data ────────────────────────────────────────────────
+   data.json is rebuilt every morning by scripts/build-data.mjs from Shopify,
+   Google Ads (Windsor) and the order-source tables. It replaces the sheet's
+   figures for the THREE most recent months it holds; older months keep
+   coming from the sheet untouched. If data.json is missing or unreadable the
+   dashboard is exactly the sheet-driven one it was. Returns a short note for
+   the "Updated" label. */
+const LIVE_MONTHS = 3;
+const money2 = n => fc(n, 2);
+const pct0   = n => Math.round(n) + '%';
+
+async function applyLiveData(d) {
+  let live;
+  try {
+    const res = await fetch('data.json?' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return '';
+    live = await res.json();
+  } catch (e) { return ''; }
+  const keys = Object.keys(live.months || {}).sort().slice(-LIVE_MONTHS);
+  if (!keys.length) return '';
+
+  // Locate (or create) each month in the sheet-built structures.
+  const nameFor = {};   // 'YYYY-MM' -> the dashboard's month key, e.g. 'Oct 2026'
+  for (const mn of d.monthsOrder) nameFor[d.monthMeta[mn].val] = mn;
+  for (const key of keys) {
+    if (nameFor[key]) continue;
+    const [y, mo] = key.split('-').map(Number);
+    const mn = `${MONTH_SHORT[mo]} ${y}`;
+    nameFor[key] = mn;
+    d.monthsOrder.push(mn);
+    d.monthMeta[mn] = { year: y, q: Math.ceil(mo / 3), num: mo, val: key, label: MONTH_SHORT[mo] };
+    d.monthly.push({ month: mn });
+  }
+  d.monthsOrder.sort((a, b) => d.monthMeta[a].val.localeCompare(d.monthMeta[b].val));
+  d.monthly.sort((a, b) => d.monthMeta[a.month].val.localeCompare(d.monthMeta[b.month].val));
+
+  const today = new Date();
+  const thisKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const spendFor = (name) => {
+    let s = d.adSpendBySource.find(x => x.name === name);
+    if (!s) { s = { name, byMonth: {} }; d.adSpendBySource.push(s); }
+    return s;
+  };
+
+  let estimated = 0;
+  for (const key of keys) {
+    const L = live.months[key], mn = nameFor[key];
+    const row = d.monthly.find(r => r.month === mn);
+    const meta = pv(row.metaAds) || 0;                    // Meta is off; keep whatever the sheet says
+    const google = L.googleSpendTotal || 0, openAi = L.openAiSpend || 0;
+    const mkt = google + openAi + meta;
+    const orders = L.orders || 0, rev = L.revenue || 0;
+    const aov = orders ? rev / orders : 0;
+    const days = key === thisKey ? Math.max(1, today.getDate()) : new Date(+key.slice(0, 4), +key.slice(5), 0).getDate();
+    // The sheet's own formulas: shipping 2.5% of the order, labour and thread 12%.
+    const costPerOrder = (orders ? L.cogs / orders : 0) + (orders ? mkt / orders : 0) + aov * 0.025 + aov * 0.12;
+    const marginPerOrder = aov - costPerOrder;
+    Object.assign(row, {
+      orders: String(orders), revenue: money2(rev), aov: money2(aov), cogs: money2(L.cogs),
+      googleAds: money2(google), metaAds: meta ? money2(meta) : '', openAiAds: openAi ? money2(openAi) : '',
+      mktPerOrder: money2(orders ? mkt / orders : 0),
+      roas: mkt ? pct0(rev / mkt * 100) : '', mktPctRev: rev ? pct0(mkt / rev * 100) : '',
+      costPerOrder: money2(costPerOrder), marginPerOrder: money2(marginPerOrder),
+      grossMarginPct: aov ? pct0(marginPerOrder / aov * 100) : '', grossProfit: money2(marginPerOrder * orders),
+      dailyMktCost: money2(google / days),
+    });
+    d.newRet = d.newRet.filter(r => r.month !== mn);
+    d.newRet.push({ month: mn, newCust: L.newCustomers || 0, returning: L.returningCustomers || 0, total: (L.newCustomers || 0) + (L.returningCustomers || 0) });
+
+    // Ad spend by campaign for this month: replace the sheet's values.
+    for (const s of d.adSpendBySource) if (s.name !== 'Meta Ads') s.byMonth[mn] = 0;
+    for (const [name, v] of Object.entries(L.googleSpend || {})) spendFor(name).byMonth[mn] = v;
+    spendFor('OpenAI Ads').byMonth[mn] = openAi;
+    if (L.openAiEstimated) estimated++;
+  }
+  d.newRet.sort((a, b) => d.monthMeta[a.month].val.localeCompare(d.monthMeta[b.month].val));
+  d.live = live;
+  const through = live.generatedAt ? new Date(live.generatedAt).toLocaleDateString() : '';
+  return ` · live data ${through}` + (estimated ? ' · OpenAI spend is an estimate' : '');
 }
 
 function parseSheet(rows) {

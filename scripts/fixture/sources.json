@@ -1,0 +1,32 @@
+{
+ "rows": [
+  {
+   "month": "2026-08",
+   "source": "ads-google",
+   "campaign": "SH_Hats",
+   "orders": 35,
+   "revenue": 56779.63
+  },
+  {
+   "month": "2026-08",
+   "source": "organic-search",
+   "campaign": "",
+   "orders": 23,
+   "revenue": 15898.08
+  },
+  {
+   "month": "2026-08",
+   "source": "direct",
+   "campaign": "",
+   "orders": 20,
+   "revenue": 7246.96
+  },
+  {
+   "month": "2026-08",
+   "source": "other",
+   "campaign": "",
+   "orders": 17,
+   "revenue": 15460.3
+  }
+ ]
+}
