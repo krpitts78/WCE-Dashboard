@@ -25,6 +25,16 @@ eq('pay-later store has no COGS, not zero', st.find((r) => r.slug === 'ncs-emplo
 const off = JSON.parse(fs.readFileSync(out, 'utf8')).offline;
 const oa = off.find((r) => r.month === '2026-08');
 eq('offline sales leave the store: groups to the Pop-up Stores tab', [oa.sales, oa.cogs, oa.orders], [38661.02, 15061.59, 49]);
+// A month that has ad spend but no orders yet (the 1st of a month) must not appear as a row of zeros.
+{
+  const dir0 = fs.mkdtempSync(path.join(os.tmpdir(), 'bd0-'));
+  for (const f of fs.readdirSync('scripts/fixture')) fs.copyFileSync(path.join('scripts/fixture', f), path.join(dir0, f));
+  const ads = JSON.parse(fs.readFileSync(path.join(dir0, 'ads.json'), 'utf8'));
+  ads.rows.push({ month: '2026-11', campaign: 'SH | Hats', spend: 68.21 });
+  fs.writeFileSync(path.join(dir0, 'ads.json'), JSON.stringify(ads));
+  execFileSync('node', ['scripts/build-data.mjs', dir0, path.join(dir0, 'x.json')], { env: { ...process.env, BUILD_TODAY: '2026-11-01' }, stdio: 'pipe' });
+  eq('a month with spend but no orders is left out', '2026-11' in JSON.parse(fs.readFileSync(path.join(dir0, 'x.json'), 'utf8')).months, false);
+}
 // A mistyped row must stop the build, not publish.
 const broken = JSON.parse(fs.readFileSync('scripts/fixture/shopifyql.json','utf8'));
 broken.rows[1][3] = '89120.99';

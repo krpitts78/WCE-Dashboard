@@ -130,6 +130,12 @@ function openAiFor(key) {
   return { spend: round2(days * num(openai.dailyBudget)), estimated: days > 0 };
 }
 
+// 5b. A month with no orders, no sales and no COGS has nothing to show yet (the 1st of a month,
+//     before the first order lands). Ad spend alone must not create a row of zeros, so it waits.
+for (const [key, o] of Object.entries(months)) {
+  if (!o.orders && !o.revenue && !o.cogs) { console.log('skipping ' + key + ': no orders yet'); delete months[key]; }
+}
+
 // 6. Derived figures, using the same formulas the sheet's rows use.
 for (const [key, o] of Object.entries(months)) {
   o.revenue = round2(o.revenue);

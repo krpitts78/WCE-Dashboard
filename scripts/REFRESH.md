@@ -101,10 +101,12 @@ node scripts/build-data.mjs /tmp/wce-in data.json
 The script refuses to write if the ShopifyQL rows do not add back up to the
 query's own total. If it exits non-zero, report the message and stop.
 
-Sanity-read the result before committing: for each of the three months,
-`orders`, `revenue` and `cogs` are above zero, `googleSpendTotal` is above zero,
-and the current month's `revenue` is not wildly below last month's at this
-point in the month. If something looks wrong, do NOT push; say what.
+Sanity-read the result before committing. Every COMPLETED month in the window (not the current
+month) must have `orders`, `revenue` and `cogs` above zero and `googleSpendTotal` above zero. The current
+month is partial by definition: it may be missing entirely (the script leaves out a month with no orders
+yet, which is normal on the 1st) and may have little or no COGS; that is not a failure. It must not be
+negative or NaN, and once it has meaningful sales it should not be wildly below last month's pace. If a
+completed month looks wrong, do NOT push; say what.
 
 ```
 git add data.json && git commit -m "data: daily refresh <date>" && git pull --rebase && git push
