@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T15:11:54.231Z",
+  "generatedAt": "2026-11-01T19:10:38.337Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -457,8 +457,8 @@
       "newCustomers": 59,
       "returningCustomers": 16,
       "googleSpend": {
-        "SH | Hats": 15757.98,
-        "Search | Hats": 5008.18,
+        "SH | Hats": 15958.25,
+        "Search | Hats": 5105.2,
         "DGen": 124.99,
         "DR | Remarketing": 120.07
       },
@@ -512,10 +512,80 @@
       },
       "openAiSpend": 250,
       "openAiEstimated": true,
-      "googleSpendTotal": 21011.22,
-      "totalAdSpend": 21261.22
+      "googleSpendTotal": 21308.51,
+      "totalAdSpend": 21558.51
+    },
+    "2026-11": {
+      "orders": 1,
+      "revenue": 346.57,
+      "cogs": 155.6,
+      "newCustomers": 1,
+      "returningCustomers": 0,
+      "googleSpend": {
+        "SH | Hats": 68.21
+      },
+      "bySource": {
+        "ads-google": {
+          "orders": 1,
+          "revenue": 346.57
+        }
+      },
+      "byCampaign": {
+        "sh-hats": {
+          "orders": 1,
+          "revenue": 346.57
+        }
+      },
+      "openAiSpend": 50,
+      "openAiEstimated": true,
+      "googleSpendTotal": 68.21,
+      "totalAdSpend": 118.21
     }
   },
+  "offline": [
+    {
+      "month": "2026-04",
+      "orders": 1,
+      "sales": 464.88,
+      "cogs": 217.35
+    },
+    {
+      "month": "2026-05",
+      "orders": 12,
+      "sales": 18650.66,
+      "cogs": 6308.78
+    },
+    {
+      "month": "2026-06",
+      "orders": 52,
+      "sales": 34712.45,
+      "cogs": 11136.4
+    },
+    {
+      "month": "2026-07",
+      "orders": 58,
+      "sales": 35083.05,
+      "cogs": 16069.58
+    },
+    {
+      "month": "2026-08",
+      "orders": 49,
+      "sales": 38661.02,
+      "cogs": 15061.59
+    },
+    {
+      "month": "2026-09",
+      "orders": 47,
+      "sales": 75653.59,
+      "cogs": 22884.04
+    },
+    {
+      "month": "2026-10",
+      "orders": 33,
+      "sales": 28447.23,
+      "cogs": 8963.03
+    }
+  ],
   "stores": [
     {
       "slug": "dp-seminoles-pink-out",
@@ -838,50 +908,6 @@
       "fundraiser": 0,
       "cogs": 233.47,
       "cogsSales": 1191.21
-    }
-  ],
-  "offline": [
-    {
-      "month": "2026-04",
-      "orders": 1,
-      "sales": 464.88,
-      "cogs": 217.35
-    },
-    {
-      "month": "2026-05",
-      "orders": 12,
-      "sales": 18650.66,
-      "cogs": 6308.78
-    },
-    {
-      "month": "2026-06",
-      "orders": 52,
-      "sales": 34712.45,
-      "cogs": 11136.4
-    },
-    {
-      "month": "2026-07",
-      "orders": 58,
-      "sales": 35083.05,
-      "cogs": 16069.58
-    },
-    {
-      "month": "2026-08",
-      "orders": 49,
-      "sales": 38661.02,
-      "cogs": 15061.59
-    },
-    {
-      "month": "2026-09",
-      "orders": 47,
-      "sales": 75653.59,
-      "cogs": 22884.04
-    },
-    {
-      "month": "2026-10",
-      "orders": 33,
-      "sales": 28447.23,
-      "cogs": 8963.03
     }
   ]
 }
