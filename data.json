@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T21:44:39.376Z",
+  "generatedAt": "2026-11-04T21:50:37.685Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
