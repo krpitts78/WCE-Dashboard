@@ -12,6 +12,8 @@ Let `M0` = the first day of the month TWO months before today (America/Chicago),
 e.g. on 2026-10-31, `M0` = `2026-08-01`. The window is `M0` through today.
 
 ## 0. Check the script first
+(If the WCE Supabase connector returns a permission error, stop and put that at the top of your report; do not publish a partial refresh.)
+
 ```
 node -v
 node scripts/check-build-data.mjs
@@ -28,7 +30,7 @@ Copy every row, including ones with an empty COGS (keep `""`). If `rowCount` is
 200, stop: the window was truncated.
 
 ## 2. Order sources and customers → `sources.json`, `customers.json`
-Supabase connector, project `otkluwnudvaotgmgskrt`, `execute_sql`. Replace
+**WCE Supabase** connector (read-only, already scoped to the WCE project, so `execute_sql` takes only `query`; do NOT use the plain "Supabase" connector, it points at a different organization), `execute_sql`. Replace
 `<YYYY-MM>` with the month of `M0`.
 ```sql
 select coalesce(json_agg(r), '[]'::json) from (
@@ -60,7 +62,7 @@ yourself. Save `{ "rows": [ { "month": "2026-08", "campaign": "<as returned>", "
 If any month returns no rows, stop and report: do not publish a month with no spend.
 
 ## 3b. Pop-up stores → `stores.json`
-Supabase connector, same project, `execute_sql`. Full history every run (no month filter):
+WCE Supabase connector, `execute_sql`. Full history every run (no month filter):
 ```sql
 select coalesce(json_agg(r order by r.slug, r.month), '[]'::json) from (
   select s.slug, s.name, s.org_name as org, s.status, s.payment_mode,
@@ -87,7 +89,7 @@ Customers tagged `Offline_Customer` (the mirror image of the main query). Shopif
 ```
 FROM sales SHOW orders, total_sales, cost_of_goods_sold GROUP BY month, order_tags SINCE 2025-07-01 UNTIL <today> WHERE customer_tags CONTAINS 'Offline_Customer' ORDER BY month, orders DESC LIMIT 1000
 ```
-Save `{ "rows": <rows exactly as returned> }` → `offline.json`. If `rowCount` is 1000, stop. Then Supabase `execute_sql`:
+Save `{ "rows": <rows exactly as returned> }` → `offline.json`. If `rowCount` is 1000, stop. Then WCE Supabase `execute_sql`:
 ```sql
 select coalesce(json_agg(r order by r.month), '[]'::json) from (
   select month, count(*) as orders from attribution_orders where excluded = 'offline' group by 1) r;
