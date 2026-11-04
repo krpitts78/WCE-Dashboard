@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T14:02:22.176Z",
+  "generatedAt": "2026-11-04T21:44:39.376Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,32 +516,52 @@
       "totalAdSpend": 21558.51
     },
     "2026-11": {
-      "orders": 1,
-      "revenue": 346.57,
-      "cogs": 155.6,
-      "newCustomers": 1,
-      "returningCustomers": 0,
+      "orders": 9,
+      "revenue": 20403.78,
+      "cogs": 8596.98,
+      "newCustomers": 8,
+      "returningCustomers": 1,
       "googleSpend": {
-        "SH | Hats": 604.6,
-        "Search | Hats": 267.77,
-        "DR | Remarketing": 5.71
+        "SH | Hats": 2083.3,
+        "Search | Hats": 729.08,
+        "DR | Remarketing": 45.26
       },
       "bySource": {
         "ads-google": {
+          "orders": 4,
+          "revenue": 4957.09
+        },
+        "direct": {
+          "orders": 3,
+          "revenue": 13416.3
+        },
+        "organic-chatgpt": {
           "orders": 1,
-          "revenue": 346.57
+          "revenue": 1125.64
+        },
+        "organic-search": {
+          "orders": 1,
+          "revenue": 866
         }
       },
       "byCampaign": {
-        "sh-hats": {
+        "search-hats": {
           "orders": 1,
-          "revenue": 346.57
+          "revenue": 1284.3
+        },
+        "sh-hats": {
+          "orders": 2,
+          "revenue": 3081.07
+        },
+        "untagged (pre-template)": {
+          "orders": 1,
+          "revenue": 591.72
         }
       },
-      "openAiSpend": 100,
+      "openAiSpend": 200,
       "openAiEstimated": true,
-      "googleSpendTotal": 878.08,
-      "totalAdSpend": 978.08
+      "googleSpendTotal": 2857.64,
+      "totalAdSpend": 3057.64
     }
   },
   "offline": [
@@ -586,6 +606,12 @@
       "orders": 33,
       "sales": 28447.23,
       "cogs": 8963.03
+    },
+    {
+      "month": "2026-11",
+      "orders": 4,
+      "sales": 5449.56,
+      "cogs": 2097.6
     }
   ],
   "stores": [
@@ -770,6 +796,20 @@
       "fundraiser": 420,
       "cogs": 447.25,
       "cogsSales": 2184.42
+    },
+    {
+      "slug": "lsa-football-playoffs-2026",
+      "name": "Football Playoffs 2026",
+      "org": "LSA",
+      "status": "active",
+      "payment_mode": "pay_now",
+      "month": "2026-11",
+      "orders": 1,
+      "units": 1,
+      "total": 42.89,
+      "fundraiser": 5,
+      "cogs": 12.76,
+      "cogsSales": 42.89
     },
     {
       "slug": "lsa-homecoming",
