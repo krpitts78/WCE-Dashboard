@@ -3,9 +3,11 @@
   "dailyBudget": 50,
   "startDate": "2026-10-27",
   "actuals": {
-    "2026-11": 204.5
+    "2026-10": 216.02,
+    "2026-11": 212.37
   },
   "actualsThrough": {
-    "2026-11": "2026-11-05 (Ads Manager: Custom Headwear $15.50 + Custom embroidered $189.00; month-to-date, update by hand)"
+    "2026-10": "complete month, Ads Manager 10/26-10/31: Custom Headwear $11.37 + Custom embroidered $204.65",
+    "2026-11": "2026-11-05 afternoon, preliminary (Ads Manager 11/01-11/05: Custom Headwear $15.50 + Custom embroidered $196.87 + 112 Trucker $0.00); month-to-date, update by hand"
   }
 }

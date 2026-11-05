@@ -510,10 +510,10 @@
           "revenue": 1524.87
         }
       },
-      "openAiSpend": 250,
-      "openAiEstimated": true,
+      "openAiSpend": 216.02,
+      "openAiEstimated": false,
       "googleSpendTotal": 21308.51,
-      "totalAdSpend": 21558.51
+      "totalAdSpend": 21524.53
     },
     "2026-11": {
       "orders": 8,
@@ -558,10 +558,10 @@
           "revenue": 591.72
         }
       },
-      "openAiSpend": 204.5,
+      "openAiSpend": 212.37,
       "openAiEstimated": false,
       "googleSpendTotal": 3141.97,
-      "totalAdSpend": 3346.47
+      "totalAdSpend": 3354.34
     }
   },
   "offline": [
