@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T23:28:52.766Z",
+  "generatedAt": "2026-11-05T13:19:40.077Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -522,8 +522,8 @@
       "newCustomers": 7,
       "returningCustomers": 1,
       "googleSpend": {
-        "SH | Hats": 2083.3,
-        "Search | Hats": 729.08,
+        "SH | Hats": 2338.68,
+        "Search | Hats": 758.03,
         "DR | Remarketing": 45.26
       },
       "bySource": {
@@ -558,10 +558,10 @@
           "revenue": 591.72
         }
       },
-      "openAiSpend": 200,
+      "openAiSpend": 250,
       "openAiEstimated": true,
-      "googleSpendTotal": 2857.64,
-      "totalAdSpend": 3057.64
+      "googleSpendTotal": 3141.97,
+      "totalAdSpend": 3391.97
     }
   },
   "offline": [
@@ -804,12 +804,12 @@
       "status": "active",
       "payment_mode": "pay_now",
       "month": "2026-11",
-      "orders": 1,
-      "units": 1,
-      "total": 42.89,
-      "fundraiser": 5,
-      "cogs": 12.76,
-      "cogsSales": 42.89
+      "orders": 4,
+      "units": 8,
+      "total": 192.62,
+      "fundraiser": 40,
+      "cogs": 38.61,
+      "cogsSales": 192.62
     },
     {
       "slug": "lsa-homecoming",
