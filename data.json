@@ -558,10 +558,10 @@
           "revenue": 591.72
         }
       },
-      "openAiSpend": 250,
-      "openAiEstimated": true,
+      "openAiSpend": 204.5,
+      "openAiEstimated": false,
       "googleSpendTotal": 3141.97,
-      "totalAdSpend": 3391.97
+      "totalAdSpend": 3346.47
     }
   },
   "offline": [
