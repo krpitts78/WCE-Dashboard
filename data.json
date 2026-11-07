@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T13:16:00.593Z",
+  "generatedAt": "2026-11-07T13:12:06.138Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,32 +516,32 @@
       "totalAdSpend": 21524.53
     },
     "2026-11": {
-      "orders": 16,
-      "revenue": 24345.34,
-      "cogs": 10215.02,
-      "newCustomers": 12,
+      "orders": 20,
+      "revenue": 27475.71,
+      "cogs": 11447.64,
+      "newCustomers": 16,
       "returningCustomers": 4,
       "googleSpend": {
-        "SH | Hats": 2860.51,
-        "Search | Hats": 918.62,
-        "DR | Remarketing": 53.58
+        "SH | Hats": 3491.98,
+        "Search | Hats": 1082.16,
+        "DR | Remarketing": 69.12
       },
       "bySource": {
         "ads-google": {
-          "orders": 11,
-          "revenue": 9390.429999999998
+          "orders": 13,
+          "revenue": 12236.84
         },
         "direct": {
-          "orders": 3,
-          "revenue": 12924.52
+          "orders": 4,
+          "revenue": 13047.98
         },
         "organic-chatgpt": {
           "orders": 1,
           "revenue": 1125.64
         },
         "organic-search": {
-          "orders": 1,
-          "revenue": 866
+          "orders": 2,
+          "revenue": 1085
         }
       },
       "byCampaign": {
@@ -554,8 +554,8 @@
           "revenue": 3365.79
         },
         "sh-hats": {
-          "orders": 5,
-          "revenue": 5055.36
+          "orders": 7,
+          "revenue": 7901.77
         },
         "untagged (pre-template)": {
           "orders": 1,
@@ -564,8 +564,8 @@
       },
       "openAiSpend": 212.37,
       "openAiEstimated": false,
-      "googleSpendTotal": 3832.71,
-      "totalAdSpend": 4045.08
+      "googleSpendTotal": 4643.26,
+      "totalAdSpend": 4855.63
     }
   },
   "offline": [
@@ -613,9 +613,9 @@
     },
     {
       "month": "2026-11",
-      "orders": 7,
-      "sales": 9469.52,
-      "cogs": 3641.64
+      "orders": 9,
+      "sales": 12805.41,
+      "cogs": 4539.95
     }
   ],
   "stores": [
@@ -808,12 +808,12 @@
       "status": "active",
       "payment_mode": "pay_now",
       "month": "2026-11",
-      "orders": 7,
-      "units": 11,
-      "total": 277.44,
-      "fundraiser": 55,
-      "cogs": 58.61,
-      "cogsSales": 277.44
+      "orders": 8,
+      "units": 12,
+      "total": 301.38,
+      "fundraiser": 60,
+      "cogs": 62.74,
+      "cogsSales": 301.38
     },
     {
       "slug": "lsa-homecoming",
