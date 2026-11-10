@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T13:21:11.200Z",
+  "generatedAt": "2026-11-10T13:19:14.176Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,32 +516,32 @@
       "totalAdSpend": 21524.53
     },
     "2026-11": {
-      "orders": 22,
-      "revenue": 27976.05,
-      "cogs": 11697.48,
-      "newCustomers": 18,
-      "returningCustomers": 4,
+      "orders": 26,
+      "revenue": 33319.48,
+      "cogs": 14355.28,
+      "newCustomers": 20,
+      "returningCustomers": 6,
       "googleSpend": {
-        "SH | Hats": 4606.56,
-        "Search | Hats": 1483.38,
-        "DR | Remarketing": 83.39
+        "SH | Hats": 5170.69,
+        "Search | Hats": 1650.16,
+        "DR | Remarketing": 97.91
       },
       "bySource": {
         "ads-google": {
-          "orders": 14,
-          "revenue": 12771.019999999999
+          "orders": 16,
+          "revenue": 15404.72
         },
         "direct": {
-          "orders": 4,
-          "revenue": 13047.98
+          "orders": 5,
+          "revenue": 15439.44
         },
         "organic-chatgpt": {
           "orders": 1,
           "revenue": 1125.64
         },
         "organic-search": {
-          "orders": 3,
-          "revenue": 1236.4
+          "orders": 4,
+          "revenue": 1554.67
         }
       },
       "byCampaign": {
@@ -554,18 +554,18 @@
           "revenue": 3899.97
         },
         "sh-hats": {
-          "orders": 7,
-          "revenue": 7901.77
+          "orders": 8,
+          "revenue": 10223.47
         },
         "untagged (pre-template)": {
-          "orders": 1,
-          "revenue": 591.72
+          "orders": 2,
+          "revenue": 903.72
         }
       },
       "openAiSpend": 212.37,
       "openAiEstimated": false,
-      "googleSpendTotal": 6173.33,
-      "totalAdSpend": 6385.7
+      "googleSpendTotal": 6918.76,
+      "totalAdSpend": 7131.13
     }
   },
   "offline": [
@@ -613,9 +613,9 @@
     },
     {
       "month": "2026-11",
-      "orders": 9,
-      "sales": 12805.41,
-      "cogs": 4539.95
+      "orders": 12,
+      "sales": 14232.56,
+      "cogs": 4850.95
     }
   ],
   "stores": [
