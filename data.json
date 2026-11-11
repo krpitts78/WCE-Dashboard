@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T13:19:14.176Z",
+  "generatedAt": "2026-11-11T13:18:06.962Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,32 +516,32 @@
       "totalAdSpend": 21389.75
     },
     "2026-11": {
-      "orders": 26,
-      "revenue": 33319.48,
-      "cogs": 14355.28,
+      "orders": 28,
+      "revenue": 33718.47,
+      "cogs": 14448.28,
       "newCustomers": 20,
-      "returningCustomers": 6,
+      "returningCustomers": 8,
       "googleSpend": {
-        "SH | Hats": 5170.69,
-        "Search | Hats": 1650.16,
-        "DR | Remarketing": 97.91
+        "SH | Hats": 5738.49,
+        "Search | Hats": 1796.36,
+        "DR | Remarketing": 111.07
       },
       "bySource": {
         "ads-google": {
           "orders": 16,
-          "revenue": 15404.72
+          "revenue": 15439.429999999998
         },
         "direct": {
-          "orders": 5,
-          "revenue": 15439.44
+          "orders": 6,
+          "revenue": 15492.48
         },
         "organic-chatgpt": {
           "orders": 1,
           "revenue": 1125.64
         },
         "organic-search": {
-          "orders": 4,
-          "revenue": 1554.67
+          "orders": 5,
+          "revenue": 1865.91
         }
       },
       "byCampaign": {
@@ -551,7 +551,7 @@
         },
         "search-hats": {
           "orders": 5,
-          "revenue": 3899.97
+          "revenue": 3934.68
         },
         "sh-hats": {
           "orders": 8,
@@ -564,8 +564,8 @@
       },
       "openAiSpend": 509.34,
       "openAiEstimated": false,
-      "googleSpendTotal": 6918.76,
-      "totalAdSpend": 7428.1
+      "googleSpendTotal": 7645.92,
+      "totalAdSpend": 8155.26
     }
   },
   "offline": [
@@ -613,9 +613,9 @@
     },
     {
       "month": "2026-11",
-      "orders": 12,
-      "sales": 14232.56,
-      "cogs": 4850.95
+      "orders": 14,
+      "sales": 18918.35,
+      "cogs": 4830.12
     }
   ],
   "stores": [
