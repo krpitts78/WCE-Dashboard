@@ -1,13 +1,13 @@
 {
   "_about": "OpenAI (ChatGPT) ads have no API feed yet. Until there is a real number, each day counts at dailyBudget from startDate and the dashboard marks it 'est.'. To replace an estimate with the real figure, add the month under actuals (e.g. \"2026-10\": 412.37) \u2014 actuals always win.",
   "dailyBudget": 50,
-  "startDate": "2026-10-27",
+  "startDate": "2026-10-29",
   "actuals": {
-    "2026-10": 216.02,
+    "2026-10": 81.24,
     "2026-11": 509.34
   },
   "actualsThrough": {
-    "2026-10": "complete month, Ads Manager 10/26-10/31: Custom Headwear $11.37 + Custom embroidered $204.65",
+    "2026-10": "complete month (ads started 10/29): all-time Ads Manager report $590.58 minus November $509.34 = $81.24; replaces the earlier $216.02, which could not fit 3 days at the $50 daily budget",
     "2026-11": "2026-11-10, per Kelly (Ads Manager 11/01-11/10); month-to-date, update by hand"
   }
 }
