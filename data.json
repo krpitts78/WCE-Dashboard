@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-14T13:13:02.476Z",
+  "generatedAt": "2026-11-15T13:12:49.880Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -524,7 +524,7 @@
       "googleSpend": {
         "SH | Hats": 7893.97,
         "Search | Hats": 2311.72,
-        "DR | Remarketing": 144.08
+        "DR | Remarketing": 147.19
       },
       "bySource": {
         "ads-google": {
@@ -572,8 +572,8 @@
       },
       "openAiSpend": 509.34,
       "openAiEstimated": false,
-      "googleSpendTotal": 10349.77,
-      "totalAdSpend": 10859.11
+      "googleSpendTotal": 10352.88,
+      "totalAdSpend": 10862.22
     }
   },
   "offline": [
