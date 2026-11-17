@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T13:19:14.886Z",
+  "generatedAt": "2026-11-17T13:17:24.955Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,15 +516,15 @@
       "totalAdSpend": 21389.75
     },
     "2026-11": {
-      "orders": 32,
-      "revenue": 46266.16,
-      "cogs": 19408.4,
-      "newCustomers": 22,
+      "orders": 34,
+      "revenue": 47769.38,
+      "cogs": 20042.4,
+      "newCustomers": 24,
       "returningCustomers": 10,
       "googleSpend": {
-        "SH | Hats": 7913.09,
-        "Search | Hats": 2333.69,
-        "DR | Remarketing": 159.92
+        "SH | Hats": 8422.02,
+        "Search | Hats": 2651.41,
+        "DR | Remarketing": 171.84
       },
       "bySource": {
         "ads-google": {
@@ -532,16 +532,16 @@
           "revenue": 22667.78
         },
         "direct": {
-          "orders": 4,
-          "revenue": 3069.94
+          "orders": 5,
+          "revenue": 4037.74
         },
         "no_data": {
           "orders": 1,
           "revenue": 3770.66
         },
         "organic-chatgpt": {
-          "orders": 1,
-          "revenue": 1125.64
+          "orders": 2,
+          "revenue": 1661.06
         },
         "organic-search": {
           "orders": 6,
@@ -572,8 +572,8 @@
       },
       "openAiSpend": 509.34,
       "openAiEstimated": false,
-      "googleSpendTotal": 10406.7,
-      "totalAdSpend": 10916.04
+      "googleSpendTotal": 11245.27,
+      "totalAdSpend": 11754.61
     }
   },
   "offline": [
@@ -621,8 +621,8 @@
     },
     {
       "month": "2026-11",
-      "orders": 21,
-      "sales": 44265.09,
+      "orders": 24,
+      "sales": 51437.27,
       "cogs": 20478.68
     }
   ],
