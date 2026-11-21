@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T13:17:06.877Z",
+  "generatedAt": "2026-11-21T13:12:34.162Z",
   "note": "Built by scripts/build-data.mjs. OpenAI spend is an estimate when openAiEstimated is true.",
   "months": {
     "2025-07": {
@@ -516,24 +516,24 @@
       "totalAdSpend": 21389.75
     },
     "2026-11": {
-      "orders": 38,
-      "revenue": 70058.46,
-      "cogs": 33441.94,
-      "newCustomers": 27,
-      "returningCustomers": 11,
+      "orders": 42,
+      "revenue": 72573.6,
+      "cogs": 34412.4,
+      "newCustomers": 30,
+      "returningCustomers": 12,
       "googleSpend": {
-        "SH | Hats": 10125.16,
-        "Search | Hats": 3671.18,
-        "DR | Remarketing": 202.53
+        "SH | Hats": 10521.87,
+        "Search | Hats": 3897.13,
+        "DR | Remarketing": 211.49
       },
       "bySource": {
         "ads-google": {
-          "orders": 20,
-          "revenue": 44207.880000000005
+          "orders": 22,
+          "revenue": 44973.04
         },
         "direct": {
-          "orders": 6,
-          "revenue": 4225.13
+          "orders": 8,
+          "revenue": 5975.11
         },
         "no_data": {
           "orders": 1,
@@ -558,12 +558,12 @@
           "revenue": 377.56
         },
         "search-hats": {
-          "orders": 6,
-          "revenue": 23694.68
+          "orders": 7,
+          "revenue": 24082.28
         },
         "sh-hats": {
-          "orders": 10,
-          "revenue": 17451.82
+          "orders": 11,
+          "revenue": 17829.38
         },
         "untagged (pre-template)": {
           "orders": 2,
@@ -572,8 +572,8 @@
       },
       "openAiSpend": 509.34,
       "openAiEstimated": false,
-      "googleSpendTotal": 13998.87,
-      "totalAdSpend": 14508.21
+      "googleSpendTotal": 14630.49,
+      "totalAdSpend": 15139.83
     }
   },
   "offline": [
@@ -621,9 +621,9 @@
     },
     {
       "month": "2026-11",
-      "orders": 26,
-      "sales": 52398.56,
-      "cogs": 20763.64
+      "orders": 28,
+      "sales": 52528.53,
+      "cogs": 20773.47
     }
   ],
   "stores": [
